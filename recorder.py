@@ -5,10 +5,13 @@ from collections import defaultdict
 import numpy as np
 
 from baselines import logger
-from mpi4py import MPI
+
+
+# from mpi4py import MPI
 
 def is_square(n):
     return n == (int(np.sqrt(n))) ** 2
+
 
 class Recorder(object):
     def __init__(self, nenvs, score_multiple=1):
@@ -34,7 +37,6 @@ class Recorder(object):
             for key in bufs:
                 self.episodes[env_id][key].append(bufs[key][env_id, left_step:].copy())
 
-
     def record_episode(self, env_id, info):
         self.total_episodes += 1
         if self.episode_worth_saving(env_id, info):
@@ -47,7 +49,7 @@ class Recorder(object):
                 pickle.dump(episode, f, protocol=-1)
 
     def get_score(self, info):
-        return int(info['r']/self.score_multiple) * self.score_multiple
+        return int(info['r'] / self.score_multiple) * self.score_multiple
 
     def episode_worth_saving(self, env_id, info):
         if self.score_multiple is None:
@@ -69,6 +71,7 @@ class Recorder(object):
         return False
 
     def get_filename(self):
-        filename = os.path.join(logger.get_dir(), 'videos_{}.pk'.format(MPI.COMM_WORLD.Get_rank()))
+        # KC modif
+        # filename = os.path.join(logger.get_dir(), 'videos_{}.pk'.format(MPI.COMM_WORLD.Get_rank()))
+        filename = os.path.join(logger.get_dir(), 'videos_{}.pk'.format(0))
         return filename
-

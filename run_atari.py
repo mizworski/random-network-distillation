@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import functools
-import os
 
-from baselines import logger
-from mpi4py import MPI
 import mpi_util
 import tf_util
+from baselines import logger
 from cmd_util import make_atari_env, arg_parser
 from policies.cnn_gru_policy_dynamics import CnnGruPolicy
 from policies.cnn_policy_param_matched import CnnPolicy
@@ -17,7 +15,7 @@ from vec_env import VecFrameStack
 def train(*, env_id, num_env, hps, num_timesteps, seed):
     venv = VecFrameStack(
         make_atari_env(env_id, num_env, seed, wrapper_kwargs=dict(),
-                       start_index=num_env * MPI.COMM_WORLD.Get_rank(),
+                       start_index=num_env,
                        max_episode_steps=hps.pop('max_episode_steps')),
         hps.pop('frame_stack'))
     # venv.score_multiple = {'Mario': 500,
@@ -41,13 +39,13 @@ def train(*, env_id, num_env, hps, num_timesteps, seed):
         ac_space=ac_space,
         stochpol_fn=functools.partial(
             policy,
-                scope='pol',
-                ob_space=ob_space,
-                ac_space=ac_space,
-                update_ob_stats_independently_per_gpu=hps.pop('update_ob_stats_independently_per_gpu'),
-                proportion_of_exp_used_for_predictor_update=hps.pop('proportion_of_exp_used_for_predictor_update'),
-                dynamics_bonus = hps.pop("dynamics_bonus")
-            ),
+            scope='pol',
+            ob_space=ob_space,
+            ac_space=ac_space,
+            update_ob_stats_independently_per_gpu=hps.pop('update_ob_stats_independently_per_gpu'),
+            proportion_of_exp_used_for_predictor_update=hps.pop('proportion_of_exp_used_for_predictor_update'),
+            dynamics_bonus=hps.pop("dynamics_bonus")
+        ),
         gamma=gamma,
         gamma_ext=hps.pop('gamma_ext'),
         lam=hps.pop('lam'),
@@ -59,14 +57,14 @@ def train(*, env_id, num_env, hps, num_timesteps, seed):
         ent_coef=0.001,
         max_grad_norm=hps.pop('max_grad_norm'),
         use_news=hps.pop("use_news"),
-        comm=MPI.COMM_WORLD if MPI.COMM_WORLD.Get_size() > 1 else None,
+        comm=None,
         update_ob_stats_every_step=hps.pop('update_ob_stats_every_step'),
         int_coeff=hps.pop('int_coeff'),
         ext_coeff=hps.pop('ext_coeff'),
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):
-        agent.collect_random_statistics(num_timesteps=128*50)
+        agent.collect_random_statistics(num_timesteps=128 * 50)
     assert len(hps) == 0, "Unused hyperparameters: %s" % list(hps.keys())
 
     counter = 0
@@ -107,17 +105,12 @@ def main():
     parser.add_argument('--ext_coeff', type=float, default=2.)
     parser.add_argument('--dynamics_bonus', type=int, default=0)
 
-
     args = parser.parse_args()
-    logger.configure(dir=logger.get_dir(), format_strs=['stdout', 'log', 'csv'] if MPI.COMM_WORLD.Get_rank() == 0 else [])
-    if MPI.COMM_WORLD.Get_rank() == 0:
-        with open(os.path.join(logger.get_dir(), 'experiment_tag.txt'), 'w') as f:
-            f.write(args.tag)
-        # shutil.copytree(os.path.dirname(os.path.abspath(__file__)), os.path.join(logger.get_dir(), 'code'))
+    logger.configure(dir=logger.get_dir(), format_strs=['stdout', 'log', 'csv'])
 
     mpi_util.setup_mpi_gpus()
 
-    seed = 10000 * args.seed + MPI.COMM_WORLD.Get_rank()
+    seed = 10000 * args.seed
     set_global_seeds(seed)
 
     hps = dict(
@@ -138,12 +131,12 @@ def main():
         policy=args.policy,
         int_coeff=args.int_coeff,
         ext_coeff=args.ext_coeff,
-        dynamics_bonus = args.dynamics_bonus
+        dynamics_bonus=args.dynamics_bonus
     )
 
     tf_util.make_session(make_default=True)
     train(env_id=args.env, num_env=args.num_env, seed=seed,
-        num_timesteps=args.num_timesteps, hps=hps)
+          num_timesteps=args.num_timesteps, hps=hps)
 
 
 if __name__ == '__main__':

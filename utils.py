@@ -77,7 +77,7 @@ def set_global_seeds(i):
     except ImportError:
         pass
     else:
-        from mpi4py import MPI
+        # from mpi4py import MPI
         tf.set_random_seed(i)
     np.random.seed(i)
     random.seed(i)

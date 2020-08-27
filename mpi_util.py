@@ -46,7 +46,8 @@ def guess_available_gpus(n_gpus=None):
         cuda_visible_divices = os.environ['CUDA_VISIBLE_DEVICES']
         cuda_visible_divices = cuda_visible_divices.split(',')
         return [int(n) for n in cuda_visible_divices]
-    if 'RCALL_NUM_GPU' not in os.environ:
+    # TODO kc modif
+    if 'RCALL_NUM_GPU' in os.environ:
         n_gpus = int(os.environ['RCALL_NUM_GPU'])
         return list(range(n_gpus))
     nvidia_dir = '/proc/driver/nvidia/gpus/'
@@ -66,8 +67,10 @@ def setup_mpi_gpus():
     nodes_ordered_by_rank = MPI.COMM_WORLD.allgather(node_id)
     processes_outranked_on_this_node = [n for n in nodes_ordered_by_rank[:MPI.COMM_WORLD.Get_rank()] if n == node_id]
     local_rank = len(processes_outranked_on_this_node)
-    
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(available_gpus[local_rank])
+
+    # TODO kc modif
+    # os.environ['CUDA_VISIBLE_DEVICES'] = str(available_gpus[local_rank])
+    os.environ['CUDA_VISIBLE_DEVICES'] = " "
 
 
 def get_local_rank_size(comm):
@@ -151,10 +154,11 @@ class MpiAdamOptimizer(tf.train.AdamOptimizer):
 
 def mpi_mean(x, axis=0, comm=None, keepdims=False):
     x = np.asarray(x)
-    assert x.ndim > 0
-    if comm is None: comm = MPI.COMM_WORLD
+    # KC modif
+    # if comm is None: comm = MPI.COMM_WORLD
     xsum = x.sum(axis=axis, keepdims=keepdims)
     n = xsum.size
+    return xsum / n, n
     localsum = np.zeros(n+1, x.dtype)
     localsum[:n] = xsum.ravel()
     localsum[n] = x.shape[axis]
@@ -183,9 +187,10 @@ class RunningMeanStd(object):
         self.use_mpi = use_mpi
         self.var = np.ones(shape, 'float64')
         self.count = epsilon
-        if comm is None:
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
+        # KC modif
+        # if comm is None:
+        #     from mpi4py import MPI
+        #     comm = MPI.COMM_WORLD
         self.comm = comm
 
 
