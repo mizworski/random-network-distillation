@@ -1,24 +1,24 @@
 from collections import defaultdict
-from mpi4py import MPI
+# from mpi4py import MPI
 import os, numpy as np
 import platform
 import tensorflow as tf
-
-def sync_from_root(sess, variables, comm=None):
-    """
-    Send the root node's parameters to every worker.
-    Arguments:
-      sess: the TensorFlow session.
-      variables: all parameter variables including optimizer's
-    """
-    if comm is None: comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    for var in variables:
-        if rank == 0:
-            comm.bcast(sess.run(var))
-        else:
-            import tensorflow as tf
-            sess.run(tf.assign(var, comm.bcast(None)))
+#
+# def sync_from_root(sess, variables, comm=None):
+#     """
+#     Send the root node's parameters to every worker.
+#     Arguments:
+#       sess: the TensorFlow session.
+#       variables: all parameter variables including optimizer's
+#     """
+#     if comm is None: comm = MPI.COMM_WORLD
+#     rank = comm.Get_rank()
+#     for var in variables:
+#         if rank == 0:
+#             comm.bcast(sess.run(var))
+#         else:
+#             import tensorflow as tf
+#             sess.run(tf.assign(var, comm.bcast(None)))
 
 # def gpu_count():
 #     """
@@ -56,21 +56,21 @@ def guess_available_gpus(n_gpus=None):
         return list(range(n_gpus))
     raise Exception("Couldn't guess the available gpus on this machine")
 
-
-def setup_mpi_gpus():
-    """
-    Set CUDA_VISIBLE_DEVICES using MPI.
-    """
-    available_gpus = guess_available_gpus()
-
-    node_id = platform.node()
-    nodes_ordered_by_rank = MPI.COMM_WORLD.allgather(node_id)
-    processes_outranked_on_this_node = [n for n in nodes_ordered_by_rank[:MPI.COMM_WORLD.Get_rank()] if n == node_id]
-    local_rank = len(processes_outranked_on_this_node)
-
-    # TODO kc modif
-    # os.environ['CUDA_VISIBLE_DEVICES'] = str(available_gpus[local_rank])
-    os.environ['CUDA_VISIBLE_DEVICES'] = " "
+#
+# def setup_mpi_gpus():
+#     """
+#     Set CUDA_VISIBLE_DEVICES using MPI.
+#     """
+#     available_gpus = guess_available_gpus()
+#
+#     node_id = platform.node()
+#     nodes_ordered_by_rank = MPI.COMM_WORLD.allgather(node_id)
+#     processes_outranked_on_this_node = [n for n in nodes_ordered_by_rank[:MPI.COMM_WORLD.Get_rank()] if n == node_id]
+#     local_rank = len(processes_outranked_on_this_node)
+#
+#     # TODO kc modif
+#     # os.environ['CUDA_VISIBLE_DEVICES'] = str(available_gpus[local_rank])
+#     os.environ['CUDA_VISIBLE_DEVICES'] = " "
 
 
 def get_local_rank_size(comm):
@@ -139,9 +139,7 @@ class MpiAdamOptimizer(tf.train.AdamOptimizer):
         buf = np.zeros(sum(sizes), np.float32)
 
         def _collect_grads(flat_grad):
-            self.comm.Allreduce(flat_grad, buf, op=MPI.SUM)
-            np.divide(buf, float(num_tasks), out=buf)
-            return buf
+            return None
 
         avg_flat_grad = tf.py_func(_collect_grads, [flat_grad], tf.float32)
         avg_flat_grad.set_shape(flat_grad.shape)

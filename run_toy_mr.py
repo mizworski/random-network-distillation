@@ -97,32 +97,6 @@ def add_env_params(parser):
 
 def main():
     import neptune
-    a = 1
-    # KC modif
-    # parser = arg_parser()
-    # add_env_params(parser)
-    # parser.add_argument('--num-timesteps', type=int, default=int(1e12))
-    # parser.add_argument('--num_env', type=int, default=32)
-    # parser.add_argument('--use_news', type=int, default=0)
-    # parser.add_argument('--gamma', type=float, default=0.99)
-    # parser.add_argument('--gamma_ext', type=float, default=0.99)
-    # parser.add_argument('--lam', type=float, default=0.95)
-    # parser.add_argument('--update_ob_stats_every_step', type=int, default=0)
-    # parser.add_argument('--update_ob_stats_independently_per_gpu', type=int, default=0)
-    # parser.add_argument('--update_ob_stats_from_random_agent', type=int, default=1)
-    # parser.add_argument('--proportion_of_exp_used_for_predictor_update', type=float, default=1.)
-    # parser.add_argument('--tag', type=str, default='')
-    # parser.add_argument('--policy', type=str, default='rnn', choices=['cnn', 'rnn'])
-    # parser.add_argument('--int_coeff', type=float, default=1.)
-    # parser.add_argument('--ext_coeff', type=float, default=2.)
-    # parser.add_argument('--dynamics_bonus', type=int, default=0)
-    #
-    #
-    # args = parser.parse_args()
-
-    # KC: argparse does not worked with mrunner, I mannually set default values used when called
-    # python3 run_toy_mr.py --gamma_ext 0.999
-    # only change is episode_max_steps=300
 
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument(
@@ -180,6 +154,13 @@ def main():
     args.add('ext_coeff', 2.)
     args.add('dynamics_bonus', 0)
 
+
+
+    # import mrunner_client  # Lazy import
+
+    # specification, overrides = mrunner_client.get_configuration(spec_path)
+    # args.extend(overrides)
+
     if not debug:
         # TODO read more from specification
         print("running with neptune")
@@ -194,18 +175,7 @@ def main():
         print("running without neptune")
         baselines_format_strs = ['stdout', 'log', 'csv']
 
-    # logger.configure(dir=logger.get_dir(), format_strs=['stdout', 'log', 'csv'] if MPI.COMM_WORLD.Get_rank() == 0 else [])
     logger.configure(dir="out", format_strs=baselines_format_strs)
-
-    # logger.Logger.CURRENT = Logger(dir=dir, output_formats=output_formats, comm=comm)
-    # logger.Logger.DEFAULT = Logger.CURRENT
-
-    # if MPI.COMM_WORLD.Get_rank() == 0:
-    with open(os.path.join(logger.get_dir(), 'experiment_tag.txt'), 'w') as f:
-        f.write(args.tag)
-    # shutil.copytree(os.path.dirname(os.path.abspath(__file__)), os.path.join(logger.get_dir(), 'code'))
-
-    # mpi_util.setup_mpi_gpus()
 
     seed = 10000 * args.seed  # + MPI.COMM_WORLD.Get_rank()
     set_global_seeds(seed)
