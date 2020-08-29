@@ -123,9 +123,10 @@ class PpoAgent(object):
                  update_ob_stats_every_step=True,
                  int_coeff=None,
                  ext_coeff=None,
+                 use_neptune=False,
                  ):
         self.lr = lr
-        self.use_neptune = True
+        self.use_neptune = use_neptune
         self.ext_coeff = ext_coeff
         self.int_coeff = int_coeff
         self.use_news = use_news

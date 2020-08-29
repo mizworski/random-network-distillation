@@ -19,7 +19,7 @@ from vec_env import VecFrameStack
 # register("toy_mr-v0", entry_point="toy_mr:ToyMR")
 
 
-def train(*, env_id, num_env, hps, num_timesteps, seed):
+def train(*, env_id, num_env, hps, num_timesteps, seed, use_neptune=False):
     venv = VecFrameStack(
         make_toy_mr_env(env_id, num_env, seed, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
                         start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
@@ -70,6 +70,7 @@ def train(*, env_id, num_env, hps, num_timesteps, seed):
         update_ob_stats_every_step=hps.pop('update_ob_stats_every_step'),
         int_coeff=hps.pop('int_coeff'),
         ext_coeff=hps.pop('ext_coeff'),
+        use_neptune=use_neptune
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):
@@ -80,7 +81,7 @@ def train(*, env_id, num_env, hps, num_timesteps, seed):
     while True:
         info = agent.step()
         if info['update']:
-            logger.logkvs(info['update'])
+            logger.logkvs(info['update'], use_neptune)
             logger.dumpkvs()
             counter += 1
         if agent.I.stats['tcount'] > num_timesteps:
@@ -206,7 +207,7 @@ def main():
 
     tf_util.make_session(make_default=True)
     train(env_id=args.env, num_env=args.num_env, seed=seed,
-          num_timesteps=args.num_timesteps, hps=hps)
+          num_timesteps=args.num_timesteps, hps=hps, use_neptune=(not debug))
 
 
 if __name__ == '__main__':
