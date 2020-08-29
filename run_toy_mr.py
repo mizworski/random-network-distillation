@@ -168,6 +168,8 @@ def main():
         neptune.create_experiment(name=specification['name'],
                                   tags=specification['tags'],
                                   params=specification['parameters'],
+                                  upload_stdout=False,
+                                  upload_stderr=False,
                                   )
         neptune.send_metric("test", 777)
         baselines_format_strs = ['log', 'csv']
