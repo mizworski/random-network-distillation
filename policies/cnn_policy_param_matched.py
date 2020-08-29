@@ -1,12 +1,17 @@
 import numpy as np
 import tensorflow as tf
 
-from baselines import logger
 from mpi_util import RunningMeanStd
 from stochastic_policy import StochasticPolicy
 from tf_util import get_available_gpus
 from utils import fc, conv, ortho_init
 
+
+class logger:
+
+    @staticmethod
+    def info(msg):
+        print(msg)
 
 def to2d(x):
     size = 1

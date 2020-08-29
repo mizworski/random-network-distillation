@@ -4,8 +4,13 @@ from collections import defaultdict
 
 import numpy as np
 
-from baselines import logger
 
+
+class logger:
+
+    @staticmethod
+    def info(msg):
+        print(msg)
 
 # from mpi4py import MPI
 
@@ -71,7 +76,4 @@ class Recorder(object):
         return False
 
     def get_filename(self):
-        # KC modif
-        # filename = os.path.join(logger.get_dir(), 'videos_{}.pk'.format(MPI.COMM_WORLD.Get_rank()))
-        filename = os.path.join(logger.get_dir(), 'videos_{}.pk'.format(0))
-        return filename
+        return None

@@ -6,6 +6,13 @@ import functools
 import collections
 import multiprocessing
 
+
+class logger:
+
+    @staticmethod
+    def info(msg):
+        print(msg)
+
 def switch(condition, then_expression, else_expression):
     """Switches between two operations depending on a scalar value (int or bool).
     Note that both `then_expression` and `else_expression`
@@ -267,7 +274,6 @@ def flattenallbut0(x):
 # ================================================================
 
 def display_var_info(vars):
-    from baselines import logger
     count_params = 0
     for v in vars:
         name = v.name

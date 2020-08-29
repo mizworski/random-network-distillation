@@ -9,13 +9,16 @@ import tensorflow as tf
 
 import tf_util
 # from mpi4py import MPI
-from baselines import logger
 from console_util import fmt_row
 from mpi_util import RunningMeanStd
 from recorder import Recorder
 from utils import explained_variance
 
 NO_STATES = ['NO_STATES']
+
+class logger:
+    def info(self, msg):
+        print(msg)
 
 
 def log_to_neptune(name, value):
@@ -227,7 +230,6 @@ class PpoAgent(object):
                                   nsteps=self.nsteps, gamma=self.gamma,
                                   venvs=venvs, stochpol=self.stochpol, comm=self.comm_train)
         self.disable_policy_update = disable_policy_update
-        self.recorder = Recorder(nenvs=self.I.nenvs, score_multiple=venvs[0].score_multiple)
 
     def collect_random_statistics(self, num_timesteps):
         # Initializes observation normalization with data from random agent.
@@ -249,7 +251,6 @@ class PpoAgent(object):
         self.I.close()
         self.I = None
 
-    @logger.profile("update")
     def update(self):
 
         # Some logic gathering best ret, rooms etc using MPI.
@@ -373,11 +374,6 @@ class PpoAgent(object):
                      'ret_int': rets_int,
                      'ret_ext': rets_ext,
                      }
-        if self.I.venvs[0].record_obs:
-            to_record['obs'] = self.I.buf_obs[None]
-        self.recorder.record(bufs=to_record,
-                             # infos=self.I.buf_epinfos)
-                             infos=[])
 
         # Create feeddict for optimization.
         envsperbatch = self.I.nenvs // self.nminibatches
@@ -470,7 +466,6 @@ class PpoAgent(object):
                 out = self.I.env_results[l]
         return out
 
-    @logger.profile("step")
     def step(self):
         # Does a rollout.
         t = self.I.step_count % self.nsteps

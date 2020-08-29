@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from multiprocessing import Process, Pipe
-from baselines import logger
 from utils import tile_images
 
 class AlreadySteppingError(Exception):
@@ -78,9 +77,6 @@ class VecEnv(ABC):
     def step(self, actions):
         self.step_async(actions)
         return self.step_wait()
-
-    def render(self, mode='human'):
-        logger.warn('Render not defined for %s'%self)
 
     @property
     def unwrapped(self):

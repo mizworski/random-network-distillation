@@ -26,11 +26,12 @@ class Monitor(Wrapper):
                     filename = osp.join(filename, Monitor.EXT)
                 else:
                     filename = filename + "." + Monitor.EXT
-            self.f = open(filename, "wt")
-            self.f.write('#%s\n' % json.dumps({"t_start": self.tstart, 'env_id': env.spec and env.spec.id}))
-            self.logger = csv.DictWriter(self.f, fieldnames=('r', 'l', 't') + reset_keywords + info_keywords)
-            self.logger.writeheader()
-            self.f.flush()
+            # self.f = open(filename, "wt")
+            # self.f.write('#%s\n' % json.dumps({"t_start": self.tstart, 'env_id': env.spec and env.spec.id}))
+            # self.logger = csv.DictWriter(self.f, fieldnames=('r', 'l', 't') + reset_keywords + info_keywords)
+            # self.logger.writeheader()
+            self.f = None
+            self.logger = None
 
         self.reset_keywords = reset_keywords
         self.info_keywords = info_keywords
@@ -76,9 +77,6 @@ class Monitor(Wrapper):
             self.episode_visited_rooms = visited_rooms
             self.episode_times.append(time.time() - self.tstart)
             epinfo.update(self.current_reset_info)
-            if self.logger:
-                self.logger.writerow(epinfo)
-                self.f.flush()
             if "episode" not in info:
                 # KC modif
                 info["episode"] = {}
