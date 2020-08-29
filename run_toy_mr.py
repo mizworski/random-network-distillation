@@ -53,7 +53,7 @@ def train(*, env_id, num_env, hps, num_timesteps, seed):
             ac_space=ac_space,
             update_ob_stats_independently_per_gpu=hps.pop('update_ob_stats_independently_per_gpu'),
             proportion_of_exp_used_for_predictor_update=hps.pop('proportion_of_exp_used_for_predictor_update'),
-            dynamics_bonus=hps.pop("dynamics_bonus")
+            dynamics_bonus=hps.pop("dynamics_bonus"),
         ),
         gamma=gamma,
         gamma_ext=hps.pop('gamma_ext'),

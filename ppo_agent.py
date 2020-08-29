@@ -125,6 +125,7 @@ class PpoAgent(object):
                  ext_coeff=None,
                  ):
         self.lr = lr
+        self.use_neptune = True
         self.ext_coeff = ext_coeff
         self.int_coeff = int_coeff
         self.use_news = use_news
@@ -283,17 +284,19 @@ class PpoAgent(object):
         if True:
             logger.info(f"Rooms visited {self.rooms}")
             # TODO log to neptune
-            # log_to_neptune("best return", self.best_ret)
             logger.info(f"Best return {self.best_ret}")
-            # log_to_neptune(f"Best return", self.best_ret)
             logger.info(f"Best local return {sorted(local_best_rets)}")
-            # log_to_neptune(f"Best local return {sorted(local_best_rets)}")
             logger.info(f"eprews {sorted(eprews)}")
             logger.info(f"n_rooms {sorted(n_rooms)}")
-            logger.info(f"Extrinsic coefficient {self.ext_coeff}")
-            logger.info(f"Gamma {self.gamma}")
-            logger.info(f"Gamma ext {self.gamma_ext}")
             logger.info(f"All scores {sorted(self.scores)}")
+
+        if self.use_neptune:
+            log_to_neptune(f"other/Best return", self.best_ret)
+            log_to_neptune(f"other/Extrinsic coefficient", self.ext_coeff)
+            log_to_neptune(f"other/Gamma", self.gamma)
+            log_to_neptune(f"other/Gamma ext", self.gamma_ext)
+            log_to_neptune(f"other/Rooms visited", len(self.rooms))
+
 
         # Normalize intrinsic rewards.
         rffs_int = np.array([self.I.rff_int.update(rew) for rew in self.I.buf_rews_int.T])
@@ -433,6 +436,9 @@ class PpoAgent(object):
             lossdict["maxkl"] = maxmaxkl["maxkl"]
             if verbose and self.is_log_leader:
                 logger.info("%i:%03i %s" % (epoch, start, fmt_row(13, [lossdict[n] for n in self.loss_names])))
+                if self.use_neptune:
+                    for metric_name, metric_value in lossdict.items():
+                        neptune.log_metric(f"rnd/{metric_name}", metric_value)
             start += envsperbatch
             if start == self.I.nenvs:
                 epoch += 1
