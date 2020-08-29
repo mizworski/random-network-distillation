@@ -1,0 +1,78 @@
+contexts:
+   test:
+     account: plgplanningrl2
+     backend_type: slurm
+     cmd_type: sbatch
+     modules_to_load:
+     - plgrid/tools/git
+     - plgrid/tools/python/3.6.5
+     - plgrid/tools/singularity/stable
+     partition: plgrid-testing
+     time: 59
+     cpu: 24
+     mem: 64G
+     slurm_url: plgmizworski@pro.cyfronet.pl
+     storage_dir: /net/people/plgmizworski/experiments_testing/
+     singularity_container: -B $TMPDIR:/tmp /net/people/plgmizworski/singularity/toymr-22.sif
+
+   test-kc:
+     account: plgplanningrl2
+     backend_type: slurm
+     cmd_type: sbatch
+     modules_to_load:
+     - plgrid/tools/git
+     - plgrid/tools/python/3.6.5
+     - plgrid/tools/singularity/stable
+     partition: plgrid-testing
+     time: 59
+     cpu: 24
+     mem: 64G
+     slurm_url: plgmizworski@pro.cyfronet.pl
+     storage_dir: /net/people/plgmizworski/experiments_rnd/
+     singularity_container: -B $TMPDIR:/tmp /net/people/plgmizworski/singularity/kc-rnd.sif
+
+   short:
+     account: plgplanningrl2
+     backend_type: slurm
+     cmd_type: sbatch
+     modules_to_load:
+     - plgrid/tools/git
+     - plgrid/tools/python/3.6.5
+     - plgrid/tools/singularity/stable
+     partition: plgrid-short
+     time: 59
+     cpu: 24
+     mem: 64G
+     slurm_url: plgmizworski@pro.cyfronet.pl
+     storage_dir: /net/people/plgmizworski/experiments/
+     singularity_container: -B $TMPDIR:/tmp /net/people/plgmizworski/singularity/toymr-22.sif
+
+   pro:
+     account: plgplanningrl2
+     backend_type: slurm
+     cmd_type: sbatch
+     modules_to_load:
+     - plgrid/tools/git
+     - plgrid/tools/python/3.6.5
+     - plgrid/tools/singularity/stable
+     partition: plgrid
+     time: 4200
+     cpu: 24
+     mem: 96G
+     slurm_url: plgmizworski@pro.cyfronet.pl
+     storage_dir: /net/people/plgmizworski/experiments/
+     singularity_container: -B $TMPDIR:/tmp /net/people/plgmizworski/singularity/toymr-22.sif
+
+   eagle:
+     account: plgplanningrl2
+     backend_type: slurm
+     cmd_type: sbatch
+     partition: plgrid
+     time: 4320
+     cpu: 28
+     ntasks: 28
+     mem: 120G
+     nodes: 1
+     slurm_url: plgmizworski@eagle.man.poznan.pl
+     storage_dir: /tmp/lustre/plgmizworski
+     singularity_container: -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/toymr-22.sif
