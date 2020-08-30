@@ -1,7 +1,10 @@
-import tensorflow as tf
-from baselines.common.distributions import make_pdtype
 from collections import OrderedDict
+
+import tensorflow as tf
 from gym import spaces
+
+from baselines.common.distributions import make_pdtype
+
 
 def canonical_dtype(orig_dt):
     if orig_dt.kind == 'f':
@@ -10,6 +13,7 @@ def canonical_dtype(orig_dt):
         return tf.int32
     else:
         raise NotImplementedError
+
 
 class StochasticPolicy(object):
     def __init__(self, scope, ob_space, ac_space):
@@ -37,28 +41,28 @@ class StochasticPolicy(object):
             box = ob_space
             assert isinstance(box, spaces.Box)
             self.ph_ob_keys = [None]
-            self.ph_ob_dtypes = { None: box.dtype }
-            shapes = { None: box.shape }
+            self.ph_ob_dtypes = {None: box.dtype}
+            shapes = {None: box.shape}
         self.ph_ob = OrderedDict([(k, tf.placeholder(
-                canonical_dtype(self.ph_ob_dtypes[k]),
-                (None, None,) + tuple(shapes[k]),
-                name=(('obs/%s'%k) if k is not None else 'obs')
-            )) for k in self.ph_ob_keys ])
-        assert list(self.ph_ob.keys())==self.ph_ob_keys, "\n%s\n%s\n" % (list(self.ph_ob.keys()), self.ph_ob_keys)
+            canonical_dtype(self.ph_ob_dtypes[k]),
+            (None, None,) + tuple(shapes[k]),
+            name=(('obs/%s' % k) if k is not None else 'obs')
+        )) for k in self.ph_ob_keys])
+        assert list(self.ph_ob.keys()) == self.ph_ob_keys, "\n%s\n%s\n" % (list(self.ph_ob.keys()), self.ph_ob_keys)
         ob_shape = tf.shape(next(iter(self.ph_ob.values())))
-        self.sy_nenvs  = ob_shape[0]
+        self.sy_nenvs = ob_shape[0]
         self.sy_nsteps = ob_shape[1]
         self.ph_ac = self.pdtype.sample_placeholder([None, None], name='ac')
         self.pd = self.vpred = self.ph_istate = None
 
-    def finalize(self, pd, vpred, ph_istate=None): #pylint: disable=W0221
+    def finalize(self, pd, vpred, ph_istate=None):  # pylint: disable=W0221
         self.pd = pd
         self.vpred = vpred
         self.ph_istate = ph_istate
 
     def ensure_observation_is_dict(self, ob):
-        if self.ph_ob_keys==[None]:
-            return { None: ob }
+        if self.ph_ob_keys == [None]:
+            return {None: ob}
         else:
             return ob
 

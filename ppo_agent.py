@@ -298,7 +298,6 @@ class PpoAgent(object):
             log_to_neptune(f"other/Gamma ext", self.gamma_ext)
             log_to_neptune(f"other/Rooms visited", len(self.rooms))
 
-
         # Normalize intrinsic rewards.
         rffs_int = np.array([self.I.rff_int.update(rew) for rew in self.I.buf_rews_int.T])
         self.I.rff_rms_int.update(rffs_int.ravel())

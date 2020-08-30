@@ -4,8 +4,6 @@ import functools
 import os
 import pickle
 
-# from mpi4py import MPI
-# import mpi_util
 import tf_util
 from baselines import logger
 from cmd_util import make_toy_mr_env
@@ -15,31 +13,17 @@ from utils import set_global_seeds
 from vec_env import VecFrameStack
 
 
-# from gym.envs.registration import registry, register, make, spec
-# register("toy_mr-v0", entry_point="toy_mr:ToyMR")
-
-
 def train(*, env_id, num_env, hps, num_timesteps, seed, use_neptune=False):
     venv = VecFrameStack(
         make_toy_mr_env(env_id, num_env, seed, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
                         start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
                         max_episode_steps=hps.pop('max_episode_steps')),
         hps.pop('frame_stack'))
-    # venv.score_multiple = {'Mario': 500,
-    #                        'MontezumaRevengeNoFrameskip-v4': 100,
-    #                        'GravitarNoFrameskip-v4': 250,
-    #                        'PrivateEyeNoFrameskip-v4': 500,
-    #                        'SolarisNoFrameskip-v4': None,
-    #                        'VentureNoFrameskip-v4': 200,
-    #                        'PitfallNoFrameskip-v4': 100,
-    #                        }[env_id]
     venv.score_multiple = 1
     venv.record_obs = True if env_id == 'SolarisNoFrameskip-v4' else False
     ob_space = venv.observation_space
     ac_space = venv.action_space
     gamma = hps.pop('gamma')
-    # policy = {'rnn': CnnGruPolicy,
-    #           'cnn': CnnPolicy}[hps.pop('policy')]
     hps.pop("policy")
     policy = ToyMRCnnPolicy
     agent = PpoAgent(
@@ -154,13 +138,6 @@ def main():
     args.add('int_coeff', 1.)
     args.add('ext_coeff', 2.)
     args.add('dynamics_bonus', 0)
-
-
-
-    # import mrunner_client  # Lazy import
-
-    # specification, overrides = mrunner_client.get_configuration(spec_path)
-    # args.extend(overrides)
 
     if not debug:
         # TODO read more from specification
