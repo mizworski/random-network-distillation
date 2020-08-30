@@ -316,8 +316,8 @@ class ToyMRCnnPolicy(CnnPolicy):
                 logger.info("CnnTarget: using '%s' shape %s as image input" % (ph.name, str(ph.shape)))
                 xr = ph[:, 1:]
                 xr = tf.cast(xr, tf.float32)
-                xr = tf.reshape(xr, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -1:]
-                xr = tf.clip_by_value((xr - self.ph_mean) / self.ph_std, -5.0, 5.0)
+                xr = tf.reshape(xr, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -17:]
+                # xr = tf.clip_by_value((xr - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
                 # xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=convfeat * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
                 # xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
@@ -331,8 +331,8 @@ class ToyMRCnnPolicy(CnnPolicy):
                 logger.info("CnnTarget: using '%s' shape %s as image input" % (ph.name, str(ph.shape)))
                 xrp = ph[:, 1:]
                 xrp = tf.cast(xrp, tf.float32)
-                xrp = tf.reshape(xrp, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -1:]
-                xrp = tf.clip_by_value((xrp - self.ph_mean) / self.ph_std, -5.0, 5.0)
+                xrp = tf.reshape(xrp, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -17:]
+                # xrp = tf.clip_by_value((xrp - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
                 # xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=convfeat, rf=1, stride=1, init_scale=np.sqrt(2)))
                 # xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
