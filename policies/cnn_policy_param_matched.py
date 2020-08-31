@@ -46,7 +46,7 @@ class CnnPolicy(StochasticPolicy):
         self.ph_std = tf.placeholder(dtype=tf.float32, shape=list(ob_space.shape[:2]) + [1], name="obstd")
         memsize *= enlargement
         hidsize *= enlargement
-        convfeat = 16 * enlargement
+        convfeat = 128 * enlargement
         self.ob_rms = RunningMeanStd(shape=list(ob_space.shape[:2]) + [1],
                                      use_mpi=not update_ob_stats_independently_per_gpu)
         ph_istate = tf.placeholder(dtype=tf.float32, shape=(None, memsize), name='state')
@@ -277,25 +277,16 @@ class ToyMRCnnPolicy(CnnPolicy):
         activ = tf.nn.relu
         yes_gpu = any(get_available_gpus())
         with tf.variable_scope(scope, reuse=reuse), tf.device('/gpu:0' if yes_gpu else '/cpu:0'):
-            X = activ(
-                conv(X, 'c3', nf=64, rf=1, stride=1, init_scale=np.sqrt(2),
-                     data_format=data_format))
             X = to2d(X)
             mix_other_observations = [X]
             X = tf.concat(mix_other_observations, axis=1)
             X = activ(fc(X, 'fc1', nh=hidsize, init_scale=np.sqrt(2)))
-            additional_size = 224  # 448
-            X = activ(fc(X, 'fc_additional', nh=additional_size,
-                         init_scale=np.sqrt(2)))
+            X = activ(fc(X, 'fc2', nh=hidsize, init_scale=np.sqrt(2)))
+
             snext = tf.zeros((sy_nenvs, memsize))
             mix_timeout = [X]
-
             Xtout = tf.concat(mix_timeout, axis=1)
-            if extrahid:
-                Xtout = X + activ(
-                    fc(Xtout, 'fc2val', nh=additional_size, init_scale=0.1))
-                X = X + activ(
-                    fc(X, 'fc2act', nh=additional_size, init_scale=0.1))
+
             pdparam = fc(X, 'pd', nh=pdparamsize, init_scale=0.01)
             vpred_int = fc(Xtout, 'vf_int', nh=1, init_scale=0.01)
             vpred_ext = fc(Xtout, 'vf_ext', nh=1, init_scale=0.01)
@@ -303,6 +294,7 @@ class ToyMRCnnPolicy(CnnPolicy):
             pdparam = tf.reshape(pdparam, (sy_nenvs, sy_nsteps, pdparamsize))
             vpred_int = tf.reshape(vpred_int, (sy_nenvs, sy_nsteps))
             vpred_ext = tf.reshape(vpred_ext, (sy_nenvs, sy_nsteps))
+
         return pdparam, vpred_int, vpred_ext, snext
 
     def define_self_prediction_rew(self, convfeat, rep_size, enlargement):
@@ -311,6 +303,7 @@ class ToyMRCnnPolicy(CnnPolicy):
         # RND bonus.
 
         # Random target network.
+        activ = tf.nn.relu
         for ph in self.ph_ob.values():
             if len(ph.shape.as_list()) == 5:  # B,T,H,W,C
                 logger.info("CnnTarget: using '%s' shape %s as image input" % (ph.name, str(ph.shape)))
@@ -321,9 +314,12 @@ class ToyMRCnnPolicy(CnnPolicy):
 
                 # xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=convfeat * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
                 # xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
-                xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
+                # xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
                 rgbr = [to2d(xr)]
-                X_r = fc(rgbr[0], 'fc1r', nh=rep_size, init_scale=np.sqrt(2))
+                X_r = activ(fc(rgbr[0], 'fc1r', nh=convfeat, init_scale=np.sqrt(2)))
+                X_r = activ(fc(X_r, 'fc2r', nh=convfeat, init_scale=np.sqrt(2)))
+                X_r = activ(fc(X_r, 'fc3r', nh=convfeat, init_scale=np.sqrt(2)))
+                X_r = fc(X_r, 'fc4r', nh=rep_size, init_scale=np.sqrt(2))
 
         # Predictor network.
         for ph in self.ph_ob.values():
@@ -336,12 +332,17 @@ class ToyMRCnnPolicy(CnnPolicy):
 
                 # xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=convfeat, rf=1, stride=1, init_scale=np.sqrt(2)))
                 # xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
+                # xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
                 rgbrp = to2d(xrp)
                 # X_r_hat = tf.nn.relu(fc(rgb[0], 'fc1r_hat1', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                X_r_hat = tf.nn.relu(fc(rgbrp, 'fc1r_hat1_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
+                # X_r_hat = tf.nn.relu(fc(rgbrp, 'fc1r_hat1_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
+                X_r_hat = rgbrp
+
                 # X_r_hat = tf.nn.relu(fc(X_r_hat, 'fc1r_hat2_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                X_r_hat = fc(X_r_hat, 'fc1r_hat3_pred', nh=rep_size, init_scale=np.sqrt(2))
+                X_r_hat = activ(fc(X_r_hat, 'fc1r_hat_pred', nh=convfeat, init_scale=np.sqrt(2)))
+                X_r_hat = activ(fc(X_r_hat, 'fc2r_hat_pred', nh=convfeat, init_scale=np.sqrt(2)))
+                X_r_hat = activ(fc(X_r_hat, 'fc3r_hat_pred', nh=convfeat, init_scale=np.sqrt(2)))
+                X_r_hat = fc(X_r_hat, 'fc4r_hat_pred', nh=rep_size, init_scale=np.sqrt(2))
 
         self.feat_var = tf.reduce_mean(tf.nn.moments(X_r, axes=[0])[1])
         self.max_feat = tf.reduce_max(tf.abs(X_r))
