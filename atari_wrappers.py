@@ -1,5 +1,5 @@
 from collections import deque
-# import cv2
+import cv2
 from copy import copy
 
 import gym
@@ -7,7 +7,8 @@ import numpy as np
 from gym import spaces
 
 
-# cv2.ocl.setUseOpenCL(False)
+cv2.ocl.setUseOpenCL(False)
+
 
 def unwrap(env):
     if hasattr(env, "unwrapped"):

@@ -68,12 +68,15 @@ class Monitor(Wrapper):
             eplen = len(self.rewards)
             epinfo = {"r": round(eprew, 6), "l": eplen, "t": round(time.time() - self.tstart, 6)}
 
-            visited_rooms = [room_loc for room_loc, first_visit in info['room_first_visit'] if first_visit is not None]
+            if 'room_first_visit' in info:
+                visited_rooms = [room_loc for room_loc, first_visit in info['room_first_visit'] if first_visit is not None]
+                self.episode_visited_rooms = visited_rooms
+            else:
+                self.episode_visited_rooms = -1
             for k in self.info_keywords:
                 epinfo[k] = info[k]
             self.episode_rewards.append(eprew)
             self.episode_lengths.append(eplen)
-            self.episode_visited_rooms = visited_rooms
             self.episode_times.append(time.time() - self.tstart)
             epinfo.update(self.current_reset_info)
             if self.logger:
