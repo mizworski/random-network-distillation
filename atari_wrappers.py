@@ -1,5 +1,5 @@
 from collections import deque
-import cv2
+# import cv2
 from copy import copy
 
 import gym
@@ -7,7 +7,7 @@ import numpy as np
 from gym import spaces
 
 
-cv2.ocl.setUseOpenCL(False)
+# cv2.ocl.setUseOpenCL(False)
 
 
 def unwrap(env):
@@ -68,9 +68,17 @@ class WarpFrame(gym.ObservationWrapper):
         self.observation_space = spaces.Box(low=0, high=255,
                                             shape=(self.height, self.width, 1), dtype=np.uint8)
 
+    def rgb2gray(self, rgb):
+        return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
+
     def observation(self, frame):
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA)
+        from PIL import Image
+        # import cv2
+        # frame2 = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        # frame2 = cv2.resize(frame2, (self.width, self.height), interpolation=cv2.INTER_AREA)
+        frame = self.rgb2gray(frame)
+        im = Image.fromarray(frame)
+        frame = np.array(im.resize((self.height, self.width)))
         return frame[:, :, None]
 
 

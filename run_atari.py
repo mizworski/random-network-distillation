@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import functools
 
+import neptune
+
 import mpi_util
 import tf_util
 from baselines import logger
@@ -12,7 +14,7 @@ from utils import set_global_seeds
 from vec_env import VecFrameStack
 
 from collections import defaultdict
-from mpi4py import MPI
+# from mpi4py import MPI
 import os, numpy as np
 import platform
 import tensorflow as tf
@@ -234,7 +236,7 @@ class RunningMeanStd(object):
         self.var = new_var
         self.count = new_count
 
-def train(*, env_id, num_env, hps, num_timesteps, seed):
+def train(*, env_id, num_env, hps, num_timesteps, seed, use_neptune=False):
     venv = VecFrameStack(
         make_atari_env(env_id, num_env, seed, wrapper_kwargs=dict(),
                        start_index=num_env,
@@ -293,7 +295,7 @@ def train(*, env_id, num_env, hps, num_timesteps, seed):
     while True:
         info = agent.step()
         if info['update']:
-            logger.logkvs(info['update'])
+            logger.logkvs(info['update'], use_neptune)
             logger.dumpkvs()
             counter += 1
         if agent.I.stats['tcount'] > num_timesteps:
@@ -311,6 +313,10 @@ def add_env_params(parser):
 def main():
     parser = arg_parser()
     add_env_params(parser)
+    parser.add_argument(
+        '--config', action='append',
+        help='Gin config files.'
+    )
     parser.add_argument('--num-timesteps', type=int, default=int(1e12))
     parser.add_argument('--num_env', type=int, default=32)
     parser.add_argument('--use_news', type=int, default=0)
@@ -322,15 +328,29 @@ def main():
     parser.add_argument('--update_ob_stats_from_random_agent', type=int, default=1)
     parser.add_argument('--proportion_of_exp_used_for_predictor_update', type=float, default=1.)
     parser.add_argument('--tag', type=str, default='')
-    parser.add_argument('--policy', type=str, default='rnn', choices=['cnn', 'rnn'])
+    parser.add_argument('--policy', type=str, default='cnn', choices=['cnn', 'rnn'])
     parser.add_argument('--int_coeff', type=float, default=1.)
     parser.add_argument('--ext_coeff', type=float, default=2.)
     parser.add_argument('--dynamics_bonus', type=int, default=0)
+    parser.add_argument('--debug', action='store_true')
 
     args = parser.parse_args()
-    logger.configure(dir=logger.get_dir(), format_strs=['stdout', 'log', 'csv'])
 
-    setup_mpi_gpus()
+    if not args.debug:
+        # TODO read more from specification
+        print("running with neptune")
+        neptune.init(project_qualified_name="pmtest/planning-with-learned-models")
+        neptune.create_experiment(name='rnd_atari',
+                                  upload_stdout=False,
+                                  upload_stderr=False,
+                                  )
+        baselines_format_strs = ['log', 'csv']
+    else:
+        print("running without neptune")
+        baselines_format_strs = ['stdout', 'log', 'csv']
+    logger.configure(dir=logger.get_dir(), format_strs=baselines_format_strs)
+
+    # setup_mpi_gpus()
 
     seed = 10000 * args.seed
     set_global_seeds(seed)
@@ -358,7 +378,7 @@ def main():
 
     tf_util.make_session(make_default=True)
     train(env_id=args.env, num_env=args.num_env, seed=seed,
-          num_timesteps=args.num_timesteps, hps=hps)
+          num_timesteps=args.num_timesteps, hps=hps, use_neptune=(not args.debug))
 
 
 if __name__ == '__main__':
