@@ -38,7 +38,7 @@ def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
             update_ob_stats_independently_per_gpu=hps.pop('update_ob_stats_independently_per_gpu'),
             proportion_of_exp_used_for_predictor_update=hps.pop('proportion_of_exp_used_for_predictor_update'),
             dynamics_bonus=hps.pop("dynamics_bonus"),
-            hidsize=250
+            hidsize=hps.pop('hidsize')
         ),
         gamma=gamma,
         gamma_ext=hps.pop('gamma_ext'),
@@ -47,7 +47,7 @@ def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
         nminibatches=hps.pop('nminibatches'),
         lr=hps.pop('lr'),
         cliprange=0.1,
-        nsteps=128,
+        nsteps=hps.pop('nsteps'),
         ent_coef=0.001,
         max_grad_norm=hps.pop('max_grad_norm'),
         use_news=hps.pop("use_news"),
@@ -139,7 +139,7 @@ def main():
     args.add('proportion_of_exp_used_for_predictor_update', 1.)
     args.add('tag', '')
     args.add('policy', 'cnn', )
-    args.add('int_coeff', 1.)
+    args.add('int_coeff', parameters['int_coeff'])
     args.add('ext_coeff', 2.)
     args.add('dynamics_bonus', 0)
 
@@ -167,7 +167,9 @@ def main():
         frame_stack=4,
         nminibatches=4,
         nepochs=4,
-        lr=0.0001,
+        nsteps=128,
+        hidsize=parameters['hidsize'],
+        lr=parameters['lr'],
         max_grad_norm=0.0,
         env_size=args.env_size,
         use_news=args.use_news,
