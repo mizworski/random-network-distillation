@@ -13,14 +13,14 @@ from utils import set_global_seeds
 from vec_env import VecFrameStack
 
 
-def train(*, env_id, num_env, hps, num_timesteps, seed, use_neptune=False):
+def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
     venv = VecFrameStack(
-        make_toy_mr_env(env_id, num_env, seed, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
+        make_toy_mr_env(map_file, num_env, seed, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
                         start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
                         max_episode_steps=hps.pop('max_episode_steps')),
         hps.pop('frame_stack'))
     venv.score_multiple = 1
-    venv.record_obs = True if env_id == 'SolarisNoFrameskip-v4' else False
+    venv.record_obs = False
     ob_space = venv.observation_space
     ac_space = venv.action_space
     gamma = hps.pop('gamma')
@@ -93,6 +93,9 @@ def main():
         '--debug', action='store_true',
         default=False
     )
+    parser.add_argument(
+        '--map_file', type=str, default=None,
+    )
     cmd_args, unknown = parser.parse_known_args()
     debug = cmd_args.debug
     spec_path = cmd_args.config[0]
@@ -111,7 +114,7 @@ def main():
         parameters = specification['parameters']
     else:
         print("debug run")
-        parameters = dict(env_id="toy_mr", env_size=None)
+        parameters = dict(map_file=cmd_args.map_file, env_size=None)
 
     class MockArgs(object):
         def add(self, key, value):
@@ -119,7 +122,7 @@ def main():
 
     args = MockArgs()
 
-    args.add('env', parameters["env_id"])  # 'chain_env' 'toy_mr'
+    args.add('map_file', parameters["map_file"])  # 'chain_env' 'toy_mr'
     args.add('env_size', parameters["env_size"])
     args.add('seed', 0)
     args.add('max_episode_steps', 600)
@@ -183,7 +186,7 @@ def main():
     )
 
     tf_util.make_session(make_default=True)
-    train(env_id=args.env, num_env=args.num_env, seed=seed,
+    train(map_file=args.map_file, num_env=args.num_env, seed=seed,
           num_timesteps=args.num_timesteps, hps=hps, use_neptune=(not debug))
 
 

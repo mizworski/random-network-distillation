@@ -346,7 +346,7 @@ class ToyMRMaps(enum.Enum):
 class ToyMR(gym.Env):
     MAP_DIR = 'mr_maps/'
 
-    def __init__(self, map_file=ToyMRMaps.FULL_MAP, max_lives=1, absolute_coordinates=False,
+    def __init__(self, map_file='full_mr_map.txt', max_lives=1, absolute_coordinates=False,
                  doors_keys_scale=1, save_enter_cell=True, trap_reward=0.):
         """
         Based on implementation provided here
@@ -358,11 +358,11 @@ class ToyMR(gym.Env):
             save_enter_cell: if state should consist enter_cell. Even if set to
                 False if max_lives > 1 enter_cell would be encoded into state.
         """
-        self.map_file = os.path.join(ToyMR.MAP_DIR, map_file.value)
+        self.map_file = os.path.join(ToyMR.MAP_DIR, map_file)
         self.max_lives = max_lives
 
         self.rooms, self.starting_room, self.starting_cell, self.goal_room, self.keys, self.doors = \
-            self.parse_map_file(map_file)
+            self.parse_map_file(self.map_file)
         self.room = self.starting_room
         self.room_first_visit = {loc: None for loc in self.rooms.keys()}
         self.t = 0
@@ -381,7 +381,7 @@ class ToyMR(gym.Env):
         # self.action_ticker = 0
         self.action_space = Discrete(4)
         # fix order of doors and keys used when cloning / restoring state
-        filename = os.path.basename(map_file)
+        filename = os.path.basename(self.map_file)
         if KEYS_ORDER.get(filename) is None:
             self.doors_order = tuple(sorted(self.doors.keys()))
             self.keys_order = tuple(sorted(self.keys.keys()))

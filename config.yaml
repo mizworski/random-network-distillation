@@ -89,4 +89,4 @@ contexts:
      nodes: 1
      slurm_url: plgmizworski@eagle.man.poznan.pl
      storage_dir: /tmp/lustre/plgmizworski
-     singularity_container: -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/toymr-22.sif
+     singularity_container: -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/kc-rnd.sif

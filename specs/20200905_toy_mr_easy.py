@@ -8,7 +8,11 @@ experiments_list = create_experiments_helper(
     },
     params_grid={
         "idx": [0],
-        'ToyMR.map_file': ['%ToyMRMaps.ONE_ROOM', '%ToyMRMaps.HALL_WAY', '%ToyMRMaps.FULL_MAP_EASY'],
+        'map_file': [
+            'one_room_shifted.txt',
+            'hall_way_shifted.txt',
+            'full_mr_map_easy.txt',
+        ],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',
     exclude=['.pytest_cache', '.vagrant', '__pycache__',
