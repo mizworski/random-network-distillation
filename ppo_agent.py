@@ -291,12 +291,12 @@ class PpoAgent(object):
             logger.info(f"n_rooms {sorted(n_rooms)}")
             logger.info(f"All scores {sorted(self.scores)}")
 
-        if self.use_neptune:
-            log_to_neptune(f"other/Best return", self.best_ret)
-            log_to_neptune(f"other/Extrinsic coefficient", self.ext_coeff)
-            log_to_neptune(f"other/Gamma", self.gamma)
-            log_to_neptune(f"other/Gamma ext", self.gamma_ext)
-            log_to_neptune(f"other/Rooms visited", len(self.rooms))
+        # if self.use_neptune:
+            # log_to_neptune(f"other/Best return", self.best_ret)
+            # log_to_neptune(f"other/Extrinsic coefficient", self.ext_coeff)
+            # log_to_neptune(f"other/Gamma", self.gamma)
+            # log_to_neptune(f"other/Gamma ext", self.gamma_ext)
+            # log_to_neptune(f"other/Rooms visited", len(self.rooms))
 
         # Normalize intrinsic rewards.
         rffs_int = np.array([self.I.rff_int.update(rew) for rew in self.I.buf_rews_int.T])
@@ -357,7 +357,7 @@ class PpoAgent(object):
             ev_int=np.clip(explained_variance(self.I.buf_vpreds_int.ravel(), rets_int.ravel()), -1, None),
             ev_ext=np.clip(explained_variance(self.I.buf_vpreds_ext.ravel(), rets_ext.ravel()), -1, None),
             rooms=SemicolonList(self.rooms),
-            n_rooms=len(self.rooms),
+            n_rooms_hisotry=len(self.rooms),
             best_ret=self.best_ret,
             reset_counter=self.I.reset_counter
         )
@@ -570,8 +570,11 @@ class PpoAgent(object):
             global_i_stats = dict_gather(self.comm_log, self.I.stats, op='sum')
             global_deque_mean = dict_gather(self.comm_log, {n: np.mean(dvs) for n, dvs in self.I.statlists.items()},
                                             op='mean')
+            global_deque_max = dict_gather(self.comm_log, {f"{n}_max": np.mean(dvs) for n, dvs in self.I.statlists.items()},
+                                            op='max')
             update_info.update(global_i_stats)
             update_info.update(global_deque_mean)
+            update_info.update(global_deque_max)
             self.global_tcount = global_i_stats['tcount']
             for infos_ in self.I.buf_epinfos:
                 infos_.clear()
