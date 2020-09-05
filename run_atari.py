@@ -285,6 +285,7 @@ def train(*, env_id, num_env, hps, num_timesteps, seed, use_neptune=False):
         update_ob_stats_every_step=hps.pop('update_ob_stats_every_step'),
         int_coeff=hps.pop('int_coeff'),
         ext_coeff=hps.pop('ext_coeff'),
+        use_neptune=use_neptune,
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):

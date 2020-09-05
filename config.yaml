@@ -76,3 +76,17 @@ contexts:
      slurm_url: plgmizworski@eagle.man.poznan.pl
      storage_dir: /tmp/lustre/plgmizworski
      singularity_container: -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/toymr-22.sif
+
+   fast:
+     account: plgplanningrl2
+     backend_type: slurm
+     cmd_type: sbatch
+     partition: fast
+     time: 59
+     cpu: 28
+     ntasks: 28
+     mem: 120G
+     nodes: 1
+     slurm_url: plgmizworski@eagle.man.poznan.pl
+     storage_dir: /tmp/lustre/plgmizworski
+     singularity_container: -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/toymr-22.sif

@@ -1,13 +1,12 @@
 # pylint: skip-file
-
+import enum
 import os
 import re
-from collections import defaultdict
 from copy import deepcopy
 from itertools import product
 
+import gin
 import gym
-import numpy as np
 import pygame
 from gym import Wrapper
 from gym.spaces import Box
@@ -70,11 +69,13 @@ def _is_namedtuple_instance(x):
 
 _leaf_types = set()
 
+
 def _is_leaf(x):
     """Returns whether pytree is a leaf."""
     if type(x) in _leaf_types:  # pylint: disable=unidiomatic-typecheck
         return True
     return not isinstance(x, (tuple, list, dict))
+
 
 def nested_map(f, x, stop_fn=_is_leaf):
     """Maps a function through a pytree.
@@ -158,6 +159,7 @@ def _is_last_level_nonempty(x):
     """Returns whether pytree is at the last level and has any child."""
     return x and _is_last_level(x)
 
+
 def nested_unzip(x):
     """Uzips a pytree of lists.
 
@@ -178,6 +180,7 @@ def nested_unzip(x):
             i += 1
     except IndexError:
         return acc
+
 
 def obs_rgb2fig(images, info_bottom=None, info_top=None):
     """Return a Nx1 grid of images as a matplotlib figure."""
@@ -328,9 +331,22 @@ hud_height = 16
 RENDERING_MODES = ['rgb_array', 'one_hot', "codes"]
 
 
-class ToyMR(gym.Env):
+@gin.constants_from_enum
+class ToyMRMaps(enum.Enum):
+    """Toy Montezuma's Revenge environment."""
 
-    def __init__(self, map_file='mr_maps/full_mr_map.txt', max_lives=1, absolute_coordinates=False,
+    ONE_ROOM = 'one_room_shifted.txt'
+    ONE_ROOM_NO_KEY = 'one_room_no_key.txt'
+    FOUR_ROOMS = 'four_rooms.txt'
+    HALL_WAY = 'hall_way_shifted.txt'
+    FULL_MAP = 'full_mr_map.txt'
+    FULL_MAP_EASY = 'full_mr_map_easy.txt'
+
+
+class ToyMR(gym.Env):
+    MAP_DIR = 'mr_maps/'
+
+    def __init__(self, map_file=ToyMRMaps.FULL_MAP, max_lives=1, absolute_coordinates=False,
                  doors_keys_scale=1, save_enter_cell=True, trap_reward=0.):
         """
         Based on implementation provided here
@@ -342,7 +358,7 @@ class ToyMR(gym.Env):
             save_enter_cell: if state should consist enter_cell. Even if set to
                 False if max_lives > 1 enter_cell would be encoded into state.
         """
-        self.map_file = map_file
+        self.map_file = os.path.join(ToyMR.MAP_DIR, map_file.value)
         self.max_lives = max_lives
 
         self.rooms, self.starting_room, self.starting_cell, self.goal_room, self.keys, self.doors = \
@@ -423,7 +439,7 @@ class ToyMR(gym.Env):
             neighbors = [(y, x) for (y, x) in
                          [(y + 1, x), (y - 1, x), (y, x - 1), (y, x + 1)]
                          if 0 <= x < width and 0 <= y < height and (
-                         y, x) in unchecked_sections
+                             y, x) in unchecked_sections
                          and whole_room[y][x] == symbol]
             for n in neighbors:
                 to_flood.add(n)
@@ -445,7 +461,7 @@ class ToyMR(gym.Env):
             if symbol in symbol_area_mapping:
                 raise Exception(
                     'Improper Abstraction in Room %s with symbol %s' % (
-                    room_number, symbol))
+                        room_number, symbol))
             else:
                 symbol_area_mapping[symbol] = flood_area
 
@@ -974,7 +990,7 @@ class ToyMR(gym.Env):
                     filter_by_nb_keys=nb_keys_taken
                 )
                 heat_map = self.render_single_heat_map(
-                   pos_visit_freqs_by_key[nb_keys_taken], transitions
+                    pos_visit_freqs_by_key[nb_keys_taken], transitions
                 )
 
                 n_rows_in_grid = np.ceil(np.sqrt(1 + nb_keys_total)).astype(int)
@@ -1175,8 +1191,8 @@ class ToyMR(gym.Env):
             # draw walls
             for coord in room.walls:
                 rect = (
-                coord[0] * tile_size + room_x, coord[1] * tile_size + room_y,
-                tile_size, tile_size)
+                    coord[0] * tile_size + room_x, coord[1] * tile_size + room_y,
+                    tile_size, tile_size)
                 pygame.draw.rect(map_, WALL_COLOR, rect)
 
             # draw key
@@ -1198,8 +1214,8 @@ class ToyMR(gym.Env):
             # draw traps
             for coord in room.traps:
                 rect = (
-                coord[0] * tile_size + room_x, coord[1] * tile_size + room_y,
-                tile_size, tile_size)
+                    coord[0] * tile_size + room_x, coord[1] * tile_size + room_y,
+                    tile_size, tile_size)
                 pygame.draw.rect(map_, TRAP_COLOR, rect)
 
         pygame.image.save(map_, file_name + '.png')
@@ -1379,7 +1395,7 @@ class DebugCloneRestoreWrapper(Wrapper):
             state = self.env.clone_full_state()
             self.second_env.restore_full_state(state)
             assert (
-                        state.array == self.second_env.clone_full_state().array).all()
+                    state.array == self.second_env.clone_full_state().array).all()
             assert state == self.second_env.clone_full_state()
             # swap envs
             self.env, self.second_env = self.second_env, self.env

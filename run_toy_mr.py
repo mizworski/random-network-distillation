@@ -38,7 +38,7 @@ def train(*, env_id, num_env, hps, num_timesteps, seed, use_neptune=False):
             update_ob_stats_independently_per_gpu=hps.pop('update_ob_stats_independently_per_gpu'),
             proportion_of_exp_used_for_predictor_update=hps.pop('proportion_of_exp_used_for_predictor_update'),
             dynamics_bonus=hps.pop("dynamics_bonus"),
-            hidsize=50
+            hidsize=250
         ),
         gamma=gamma,
         gamma_ext=hps.pop('gamma_ext'),
@@ -47,7 +47,7 @@ def train(*, env_id, num_env, hps, num_timesteps, seed, use_neptune=False):
         nminibatches=hps.pop('nminibatches'),
         lr=hps.pop('lr'),
         cliprange=0.1,
-        nsteps=250,
+        nsteps=128,
         ent_coef=0.001,
         max_grad_norm=hps.pop('max_grad_norm'),
         use_news=hps.pop("use_news"),
@@ -161,10 +161,10 @@ def main():
     set_global_seeds(seed)
 
     hps = dict(
-        frame_stack=1,
-        nminibatches=2,
+        frame_stack=4,
+        nminibatches=4,
         nepochs=4,
-        lr=1e-6,
+        lr=0.0001,
         max_grad_norm=0.0,
         env_size=args.env_size,
         use_news=args.use_news,
