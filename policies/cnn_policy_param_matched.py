@@ -46,7 +46,7 @@ class CnnPolicy(StochasticPolicy):
         self.ph_std = tf.placeholder(dtype=tf.float32, shape=list(ob_space.shape[:2]) + [1], name="obstd")
         memsize *= enlargement
         hidsize *= enlargement
-        convfeat = 128 * enlargement
+        convfeat = 512 * enlargement
         self.ob_rms = RunningMeanStd(shape=list(ob_space.shape[:2]) + [1],
                                      use_mpi=not update_ob_stats_independently_per_gpu)
         ph_istate = tf.placeholder(dtype=tf.float32, shape=(None, memsize), name='state')
@@ -316,10 +316,10 @@ class ToyMRCnnPolicy(CnnPolicy):
                 # xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
                 # xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
                 rgbr = [to2d(xr)]
-                X_r = activ(fc(rgbr[0], 'fc1r', nh=convfeat, init_scale=np.sqrt(2)))
-                X_r = activ(fc(X_r, 'fc2r', nh=convfeat, init_scale=np.sqrt(2)))
-                X_r = activ(fc(X_r, 'fc3r', nh=convfeat, init_scale=np.sqrt(2)))
-                X_r = fc(X_r, 'fc4r', nh=rep_size, init_scale=np.sqrt(2))
+                X_r = activ(fc(rgbr[0], 'fc1r', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r = activ(fc(X_r, 'fc2r', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r = activ(fc(X_r, 'fc3r', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r = fc(X_r, 'fc5r', nh=rep_size, init_scale=np.sqrt(2))
 
         # Predictor network.
         for ph in self.ph_ob.values():
@@ -339,10 +339,10 @@ class ToyMRCnnPolicy(CnnPolicy):
                 X_r_hat = rgbrp
 
                 # X_r_hat = tf.nn.relu(fc(X_r_hat, 'fc1r_hat2_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                X_r_hat = activ(fc(X_r_hat, 'fc1r_hat_pred', nh=convfeat, init_scale=np.sqrt(2)))
-                X_r_hat = activ(fc(X_r_hat, 'fc2r_hat_pred', nh=convfeat, init_scale=np.sqrt(2)))
-                X_r_hat = activ(fc(X_r_hat, 'fc3r_hat_pred', nh=convfeat, init_scale=np.sqrt(2)))
-                X_r_hat = fc(X_r_hat, 'fc4r_hat_pred', nh=rep_size, init_scale=np.sqrt(2))
+                X_r_hat = activ(fc(X_r_hat, 'fc1r_hat_pred', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r_hat = activ(fc(X_r_hat, 'fc2r_hat_pred', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r_hat = activ(fc(X_r_hat, 'fc3r_hat_pred', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r_hat = fc(X_r_hat, 'fc5r_hat_pred', nh=rep_size, init_scale=np.sqrt(2))
 
         self.feat_var = tf.reduce_mean(tf.nn.moments(X_r, axes=[0])[1])
         self.max_feat = tf.reduce_max(tf.abs(X_r))
