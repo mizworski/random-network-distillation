@@ -25,6 +25,13 @@ def log_to_neptune(name, value):
         print(f"(neptune) {name} {value}")
 
 
+def log_image_to_neptune(name, image):
+    try:
+        neptune.log_image(name, image)
+    except neptune.exceptions.Uninitialized:
+        print(f"(neptune) {name} <image>")
+
+
 class SemicolonList(list):
     def __str__(self):
         return '[' + ';'.join([str(x) for x in self]) + ']'
@@ -124,6 +131,8 @@ class PpoAgent(object):
                  int_coeff=None,
                  ext_coeff=None,
                  use_neptune=False,
+                 frame_stack=4,
+                 env=None
                  ):
         self.lr = lr
         self.use_neptune = use_neptune
@@ -223,6 +232,11 @@ class PpoAgent(object):
         # sync_from_root(tf.get_default_session(), allvars) #Syncs initialization across mpi workers.
         self.t0 = time.time()
         self.global_tcount = 0
+
+        self.episode_observations = []
+        self.dones_count = 0
+        self.frame_stack = frame_stack
+        self.env = env
 
     def start_interaction(self, venvs, disable_policy_update=False):
         self.I = InteractionState(ob_space=self.ob_space, ac_space=self.ac_space,
@@ -476,6 +490,20 @@ class PpoAgent(object):
                 out = self.I.env_results[l]
         return out
 
+    def log_heat_map(self, episode_observations):
+        state_visit_freq = {}
+        invalid_transitions = {}
+        for observation in episode_observations:
+            state = self.env.obs2state(observation)
+            if state not in state_visit_freq:
+                state_visit_freq[state] = 0
+            state_visit_freq[state] += 1
+
+        visit_heat_map = self.env.render_visit_heat_map(
+            state_visit_freq, invalid_transitions, separate_by_keys=False
+        )
+        log_image_to_neptune(f'heat_maps', visit_heat_map)
+
     @logger.profile("step")
     def step(self):
         # Does a rollout.
@@ -484,6 +512,16 @@ class PpoAgent(object):
         episodes_visited_rooms = []
         for l in range(self.I.nlump):
             obs, prevrews, news, infos = self.env_get(l)
+            if news[0]:
+                self.dones_count += 1
+            if self.dones_count % 10 == 0:
+                self.log_heat_map(np.stack(self.episode_observations))
+                self.episode_observations = []
+                self.dones_count += 1
+            elif self.dones_count % 10 == 9:
+                obs_len = obs.shape[-1] // self.frame_stack
+                self.episode_observations.append(obs[0, 0, 0, -obs_len:])
+
             for env_pos_in_lump, info in enumerate(infos):
                 if 'episode' in info:
                     # Information like rooms visited is added to info on end of episode.
@@ -499,8 +537,8 @@ class PpoAgent(object):
                     self.I.buf_epinfos[env_pos_in_lump + l * self.I.lump_stride][t] = info_with_places
                 if 'room_first_visit' in info:
                     visited_rooms = [
-                        room_loc for room_loc, first_visit in info['room_first_visit'].items()
-                        if first_visit is not None
+                        room_loc for (room_loc, first_visit), done in zip(info['room_first_visit'].items(), news)
+                        if first_visit is not None and done
                     ]
                     # self.I.buf_epinfos[env_pos_in_lump+l*self.I.lump_stride][t] = {
                     #     'visited_rooms': visited_rooms
@@ -582,16 +620,15 @@ class PpoAgent(object):
             update_info = {}
 
         # Some reporting logic.
-        for epinfo, visited_rooms in zip(epinfos, episodes_visited_rooms):
+        for visited_rooms in episodes_visited_rooms:
+            self.local_rooms += list(visited_rooms)
+            self.local_rooms = sorted(list(set(self.local_rooms)))
+            self.I.statlists['eprooms'].append(len(visited_rooms))
+        for epinfo in epinfos:
             if self.testing:
                 self.I.statlists['eprew_test'].append(epinfo['r'])
                 self.I.statlists['eplen_test'].append(epinfo['l'])
             else:
-                if visited_rooms:
-                    self.local_rooms += list(visited_rooms)
-                    self.local_rooms = sorted(list(set(self.local_rooms)))
-                    self.I.statlists['eprooms'].append(len(visited_rooms))
-
                 self.I.statlists['eprew'].append(epinfo['r'])
                 if self.local_best_ret is None:
                     self.local_best_ret = epinfo["r"]

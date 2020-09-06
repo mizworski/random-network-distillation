@@ -12,7 +12,7 @@ experiments_list = create_experiments_helper(
     params_grid={
         "idx": [0],
         'map_file': [
-            'full_mr_map.txt',
+            'full_mr_map_easy.txt',
         ],
         "int_coeff": [0, 2, 10, 1000],
         # "int_coeff": [2, 1000],
@@ -26,6 +26,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', 'full_easy'],
+    tags=[globals()['script'][:-3], 'rnd', 'full_easy', 'correct_easy'],
     with_neptune=True
 )

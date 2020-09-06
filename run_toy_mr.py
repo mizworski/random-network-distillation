@@ -9,6 +9,7 @@ from baselines import logger
 from cmd_util import make_toy_mr_env
 from policies.cnn_policy_param_matched import ToyMRCnnPolicy
 from ppo_agent import PpoAgent
+from toy_mr import ToyMR
 from utils import set_global_seeds
 from vec_env import VecFrameStack
 
@@ -18,7 +19,7 @@ def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
         make_toy_mr_env(map_file, num_env, seed, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
                         start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
                         max_episode_steps=hps.pop('max_episode_steps')),
-        hps.pop('frame_stack'))
+        hps['frame_stack'])
     venv.score_multiple = 1
     venv.record_obs = False
     ob_space = venv.observation_space
@@ -55,7 +56,9 @@ def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
         update_ob_stats_every_step=hps.pop('update_ob_stats_every_step'),
         int_coeff=hps.pop('int_coeff'),
         ext_coeff=hps.pop('ext_coeff'),
-        use_neptune=use_neptune
+        use_neptune=use_neptune,
+        frame_stack=hps.pop('frame_stack'),
+        env=ToyMR(map_file)
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):
@@ -128,7 +131,7 @@ def main():
     args.add('max_episode_steps', 600)
 
     args.add('num_timesteps', int(1e12))
-    args.add('num_env', 64)
+    args.add('num_env', 4)
     args.add('use_news', 0)
     args.add('gamma', 0.99)
     args.add('gamma_ext', 0.999)
