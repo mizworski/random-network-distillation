@@ -6,15 +6,20 @@ experiments_list = create_experiments_helper(
         "env_id": "toy_mr",
         "env_size": None,
         'hidsize': 50,
+        'max_episode_steps': 600,
 
     },
     params_grid={
         "idx": [0],
         'map_file': [
-            'full_mr_map_easy.txt',
+            'full_mr_map.txt',
         ],
-        "int_coeff": [0, 2, 10, 100, 1000],
-        "lr": [1e-2, 1e-3, 1e-4],
+        "int_coeff": [0, 2, 10, 1000],
+        # "int_coeff": [2, 1000],
+        "lr": [1e-2, 1e-4],
+        # "lr": [1e-3],
+        "frame_stack": [4],
+        # "frame_stack": [1, 4],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',
     exclude=['.pytest_cache', '.vagrant', '__pycache__',

@@ -164,7 +164,7 @@ def main():
     set_global_seeds(seed)
 
     hps = dict(
-        frame_stack=4,
+        frame_stack=parameters['frame_stack'],
         nminibatches=4,
         nepochs=4,
         nsteps=128,

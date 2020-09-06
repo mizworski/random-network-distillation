@@ -4,6 +4,7 @@ import os
 import re
 from copy import deepcopy
 from itertools import product
+import numpy as np
 
 import gin
 import gym
