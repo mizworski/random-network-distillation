@@ -18,6 +18,8 @@ experiments_list = create_experiments_helper(
         "lr": [1e-2, 1e-4],
         # "lr": [1e-3],
         "frame_stack": [4],
+        'hidsize': [50, 100],
+        'nepochs': [1],
         # "frame_stack": [1, 4],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',

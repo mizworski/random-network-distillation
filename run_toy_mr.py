@@ -131,7 +131,7 @@ def main():
     args.add('max_episode_steps', 600)
 
     args.add('num_timesteps', int(1e12))
-    args.add('num_env', 4)
+    args.add('num_env', 32)
     args.add('use_news', 0)
     args.add('gamma', 0.99)
     args.add('gamma_ext', 0.999)
@@ -169,7 +169,7 @@ def main():
     hps = dict(
         frame_stack=parameters['frame_stack'],
         nminibatches=4,
-        nepochs=4,
+        nepochs=parameters['nepochs'],
         nsteps=128,
         hidsize=parameters['hidsize'],
         lr=parameters['lr'],

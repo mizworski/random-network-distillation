@@ -514,15 +514,15 @@ class PpoAgent(object):
             obs, prevrews, news, infos = self.env_get(l)
             if news[0]:
                 self.dones_count += 1
-            if self.dones_count % 10 == 0:
+            if self.dones_count % 20 == 0:
                 self.log_heat_map(np.stack(self.episode_observations))
                 self.episode_observations = []
                 self.dones_count += 1
-            elif self.dones_count % 10 == 9:
+            elif self.dones_count % 20 == 19:
                 obs_len = obs.shape[-1] // self.frame_stack
                 self.episode_observations.append(obs[0, 0, 0, -obs_len:])
 
-            for env_pos_in_lump, info in enumerate(infos):
+            for env_pos_in_lump, (info, done) in enumerate(zip(infos, news)):
                 if 'episode' in info:
                     # Information like rooms visited is added to info on end of episode.
                     epinfos.append(info['episode'])
@@ -535,10 +535,10 @@ class PpoAgent(object):
                         import ipdb;
                         ipdb.set_trace()
                     self.I.buf_epinfos[env_pos_in_lump + l * self.I.lump_stride][t] = info_with_places
-                if 'room_first_visit' in info:
+                if 'room_first_visit' in info and done:
                     visited_rooms = [
-                        room_loc for (room_loc, first_visit), done in zip(info['room_first_visit'].items(), news)
-                        if first_visit is not None and done
+                        room_loc for room_loc, first_visit in info['room_first_visit'].items()
+                        if first_visit is not None
                     ]
                     # self.I.buf_epinfos[env_pos_in_lump+l*self.I.lump_stride][t] = {
                     #     'visited_rooms': visited_rooms
