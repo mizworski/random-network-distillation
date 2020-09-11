@@ -33,22 +33,25 @@ class CnnPolicy(StochasticPolicy):
                  update_ob_stats_independently_per_gpu=True,
                  proportion_of_exp_used_for_predictor_update=1.,
                  dynamics_bonus=False,
+                 single_slice_shape=1,
+                 rep_size=256,
+                 predictor_hid_size=512,
+                 random_hid_size=512,
                  ):
         StochasticPolicy.__init__(self, scope, ob_space, ac_space)
         self.proportion_of_exp_used_for_predictor_update = proportion_of_exp_used_for_predictor_update
+        self.single_slice_shape = single_slice_shape
         enlargement = {
             'small': 1,
             'normal': 2,
             'large': 4
         }[policy_size]
-        rep_size = 256
-        self.ph_mean = tf.placeholder(dtype=tf.float32, shape=list(ob_space.shape[:2]) + [1], name="obmean")
-        self.ph_std = tf.placeholder(dtype=tf.float32, shape=list(ob_space.shape[:2]) + [1], name="obstd")
+        self.rep_size = rep_size
+        self.ph_mean = tf.placeholder(dtype=tf.float32, shape=list(ob_space.shape[:2]) + [single_slice_shape], name="obmean")
+        self.ph_std = tf.placeholder(dtype=tf.float32, shape=list(ob_space.shape[:2]) + [single_slice_shape], name="obstd")
         memsize *= enlargement
         hidsize *= enlargement
-        convfeat = 512 * enlargement
-        self.ob_rms = RunningMeanStd(shape=list(ob_space.shape[:2]) + [1],
-                                     use_mpi=not update_ob_stats_independently_per_gpu)
+        self.ob_rms = RunningMeanStd(shape=list(ob_space.shape[:2]) + [single_slice_shape], use_mpi=False)
         ph_istate = tf.placeholder(dtype=tf.float32, shape=(None, memsize), name='state')
         pdparamsize = self.pdtype.param_shape()[0]
         self.memsize = memsize
@@ -78,9 +81,11 @@ class CnnPolicy(StochasticPolicy):
                               pdparamsize=pdparamsize
                               )
         if dynamics_bonus:
-            self.define_dynamics_prediction_rew(convfeat=convfeat, rep_size=rep_size, enlargement=enlargement)
+            self.define_dynamics_prediction_rew(predictor_hid_size, random_hid_size, rep_size, enlargement,
+                                                single_slice_shape)
         else:
-            self.define_self_prediction_rew(convfeat=convfeat, rep_size=rep_size, enlargement=enlargement)
+            self.define_self_prediction_rew(predictor_hid_size, random_hid_size, rep_size, enlargement,
+                                            single_slice_shape)
 
         pd = self.pdtype.pdfromflat(self.pdparam_rollout)
         self.a_samp = pd.sample()
@@ -129,7 +134,7 @@ class CnnPolicy(StochasticPolicy):
             vpred_ext = tf.reshape(vpred_ext, (sy_nenvs, sy_nsteps))
         return pdparam, vpred_int, vpred_ext, snext
 
-    def define_self_prediction_rew(self, convfeat, rep_size, enlargement):
+    def define_self_prediction_rew(self, predictor_hid_size, random_hid_size, rep_size, enlargement, single_slice_shape):
         logger.info("Using RND BONUS ****************************************************")
 
         # RND bonus.
@@ -143,9 +148,9 @@ class CnnPolicy(StochasticPolicy):
                 xr = tf.reshape(xr, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -1:]
                 xr = tf.clip_by_value((xr - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
-                xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=convfeat * 1, rf=8, stride=4, init_scale=np.sqrt(2)))
-                xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=convfeat * 2 * 1, rf=4, stride=2, init_scale=np.sqrt(2)))
-                xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=convfeat * 2 * 1, rf=3, stride=1, init_scale=np.sqrt(2)))
+                xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=random_hid_size * 1, rf=8, stride=4, init_scale=np.sqrt(2)))
+                xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=random_hid_size * 2 * 1, rf=4, stride=2, init_scale=np.sqrt(2)))
+                xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=random_hid_size * 2 * 1, rf=3, stride=1, init_scale=np.sqrt(2)))
                 rgbr = [to2d(xr)]
                 X_r = fc(rgbr[0], 'fc1r', nh=rep_size, init_scale=np.sqrt(2))
 
@@ -158,9 +163,9 @@ class CnnPolicy(StochasticPolicy):
                 xrp = tf.reshape(xrp, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -1:]
                 xrp = tf.clip_by_value((xrp - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=convfeat, rf=8, stride=4, init_scale=np.sqrt(2)))
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=convfeat * 2, rf=4, stride=2, init_scale=np.sqrt(2)))
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=convfeat * 2, rf=3, stride=1, init_scale=np.sqrt(2)))
+                xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=predictor_hid_size, rf=8, stride=4, init_scale=np.sqrt(2)))
+                xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=predictor_hid_size * 2, rf=4, stride=2, init_scale=np.sqrt(2)))
+                xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=predictor_hid_size * 2, rf=3, stride=1, init_scale=np.sqrt(2)))
                 rgbrp = to2d(xrp)
                 # X_r_hat = tf.nn.relu(fc(rgb[0], 'fc1r_hat1', nh=256 * enlargement, init_scale=np.sqrt(2)))
                 X_r_hat = tf.nn.relu(fc(rgbrp, 'fc1r_hat1_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
@@ -179,7 +184,7 @@ class CnnPolicy(StochasticPolicy):
         mask = tf.cast(mask < self.proportion_of_exp_used_for_predictor_update, tf.float32)
         self.aux_loss = tf.reduce_sum(mask * self.aux_loss) / tf.maximum(tf.reduce_sum(mask), 1.)
 
-    def define_dynamics_prediction_rew(self, convfeat, rep_size, enlargement):
+    def define_dynamics_prediction_rew(self, predictor_hid_size, random_hid_size, rep_size, enlargement, single_slice_shape):
         # Dynamics loss with random features.
 
         # Random target network.
@@ -191,9 +196,9 @@ class CnnPolicy(StochasticPolicy):
                 xr = tf.reshape(xr, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -1:]
                 xr = tf.clip_by_value((xr - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
-                xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=convfeat * 1, rf=8, stride=4, init_scale=np.sqrt(2)))
-                xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=convfeat * 2 * 1, rf=4, stride=2, init_scale=np.sqrt(2)))
-                xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=convfeat * 2 * 1, rf=3, stride=1, init_scale=np.sqrt(2)))
+                xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=random_hid_size * 1, rf=8, stride=4, init_scale=np.sqrt(2)))
+                xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=random_hid_size * 2 * 1, rf=4, stride=2, init_scale=np.sqrt(2)))
+                xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=random_hid_size * 2 * 1, rf=3, stride=1, init_scale=np.sqrt(2)))
                 rgbr = [to2d(xr)]
                 X_r = fc(rgbr[0], 'fc1r', nh=rep_size, init_scale=np.sqrt(2))
 
@@ -215,9 +220,9 @@ class CnnPolicy(StochasticPolicy):
                 # ph_mean, ph_std are 84x84x1, so we subtract the average of the last channel from all channels. Is this ok?
                 xrp = tf.clip_by_value((xrp - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=convfeat, rf=8, stride=4, init_scale=np.sqrt(2)))
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=convfeat * 2, rf=4, stride=2, init_scale=np.sqrt(2)))
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=convfeat * 2, rf=3, stride=1, init_scale=np.sqrt(2)))
+                xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=predictor_hid_size, rf=8, stride=4, init_scale=np.sqrt(2)))
+                xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=predictor_hid_size * 2, rf=4, stride=2, init_scale=np.sqrt(2)))
+                xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=predictor_hid_size * 2, rf=3, stride=1, init_scale=np.sqrt(2)))
                 rgbrp = to2d(xrp)
 
                 # X_r_hat = tf.nn.relu(fc(rgb[0], 'fc1r_hat1', nh=256 * enlargement, init_scale=np.sqrt(2)))
@@ -244,10 +249,10 @@ class CnnPolicy(StochasticPolicy):
         for ob in dict_obs.values():
             if ob is not None:
                 if update_obs_stats:
-                    raise NotImplementedError
                     ob = ob.astype(np.float32)
-                    ob = ob.reshape(-1, *self.ob_space.shape)
-                    self.ob_rms.update(ob)
+                    # ob = ob.reshape(-1, *self.ob_space.shape)
+                    ob_ = ob[:, :, :, -self.single_slice_shape:]
+                    self.ob_rms.update(ob_)
         # Note: if it fails here with ph vs observations inconsistency, check if you're loading agent from disk.
         # It will use whatever observation spaces saved to disk along with other ctor params.
         feed1 = {self.ph_ob[k]: dict_obs[k][:, None] for k in self.ph_ob_keys}
@@ -297,7 +302,7 @@ class ToyMRCnnPolicy(CnnPolicy):
 
         return pdparam, vpred_int, vpred_ext, snext
 
-    def define_self_prediction_rew(self, convfeat, rep_size, enlargement):
+    def define_self_prediction_rew(self, predictor_hid_size, random_hid_size, rep_size, enlargement, single_slice_shape):
         logger.info("Using RND BONUS ****************************************************")
 
         # RND bonus.
@@ -309,16 +314,13 @@ class ToyMRCnnPolicy(CnnPolicy):
                 logger.info("CnnTarget: using '%s' shape %s as image input" % (ph.name, str(ph.shape)))
                 xr = ph[:, 1:]
                 xr = tf.cast(xr, tf.float32)
-                xr = tf.reshape(xr, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -17:]
-                # xr = tf.clip_by_value((xr - self.ph_mean) / self.ph_std, -5.0, 5.0)
+                xr = tf.reshape(xr, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -single_slice_shape:]
+                xr = tf.clip_by_value((xr - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
-                # xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=convfeat * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
-                # xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
-                # xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
                 rgbr = [to2d(xr)]
-                X_r = activ(fc(rgbr[0], 'fc1r', nh=4 * convfeat, init_scale=np.sqrt(2)))
-                X_r = activ(fc(X_r, 'fc2r', nh=4 * convfeat, init_scale=np.sqrt(2)))
-                X_r = activ(fc(X_r, 'fc3r', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r = activ(fc(rgbr[0], 'fc1r', nh=random_hid_size, init_scale=np.sqrt(2)))
+                X_r = activ(fc(X_r, 'fc2r', nh=random_hid_size, init_scale=np.sqrt(2)))
+                X_r = activ(fc(X_r, 'fc3r', nh=random_hid_size, init_scale=np.sqrt(2)))
                 X_r = fc(X_r, 'fc5r', nh=rep_size, init_scale=np.sqrt(2))
 
         # Predictor network.
@@ -327,21 +329,15 @@ class ToyMRCnnPolicy(CnnPolicy):
                 logger.info("CnnTarget: using '%s' shape %s as image input" % (ph.name, str(ph.shape)))
                 xrp = ph[:, 1:]
                 xrp = tf.cast(xrp, tf.float32)
-                xrp = tf.reshape(xrp, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -17:]
-                # xrp = tf.clip_by_value((xrp - self.ph_mean) / self.ph_std, -5.0, 5.0)
+                xrp = tf.reshape(xrp, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -single_slice_shape:]
+                xrp = tf.clip_by_value((xrp - self.ph_mean) / self.ph_std, -5.0, 5.0)
 
-                # xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=convfeat, rf=1, stride=1, init_scale=np.sqrt(2)))
-                # xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
-                # xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
                 rgbrp = to2d(xrp)
-                # X_r_hat = tf.nn.relu(fc(rgb[0], 'fc1r_hat1', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                # X_r_hat = tf.nn.relu(fc(rgbrp, 'fc1r_hat1_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
                 X_r_hat = rgbrp
 
-                # X_r_hat = tf.nn.relu(fc(X_r_hat, 'fc1r_hat2_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                X_r_hat = activ(fc(X_r_hat, 'fc1r_hat_pred', nh=4 * convfeat, init_scale=np.sqrt(2)))
-                X_r_hat = activ(fc(X_r_hat, 'fc2r_hat_pred', nh=4 * convfeat, init_scale=np.sqrt(2)))
-                X_r_hat = activ(fc(X_r_hat, 'fc3r_hat_pred', nh=4 * convfeat, init_scale=np.sqrt(2)))
+                X_r_hat = activ(fc(X_r_hat, 'fc1r_hat_pred', nh=predictor_hid_size, init_scale=np.sqrt(2)))
+                X_r_hat = activ(fc(X_r_hat, 'fc2r_hat_pred', nh=predictor_hid_size, init_scale=np.sqrt(2)))
+                X_r_hat = activ(fc(X_r_hat, 'fc3r_hat_pred', nh=predictor_hid_size, init_scale=np.sqrt(2)))
                 X_r_hat = fc(X_r_hat, 'fc5r_hat_pred', nh=rep_size, init_scale=np.sqrt(2))
 
         self.feat_var = tf.reduce_mean(tf.nn.moments(X_r, axes=[0])[1])
@@ -352,64 +348,6 @@ class ToyMRCnnPolicy(CnnPolicy):
         targets = tf.stop_gradient(X_r)
         # self.aux_loss = tf.reduce_mean(tf.square(noisy_targets-X_r_hat))
         self.aux_loss = tf.reduce_mean(tf.square(targets - X_r_hat), -1)
-        mask = tf.random_uniform(shape=tf.shape(self.aux_loss), minval=0., maxval=1., dtype=tf.float32)
-        mask = tf.cast(mask < self.proportion_of_exp_used_for_predictor_update, tf.float32)
-        self.aux_loss = tf.reduce_sum(mask * self.aux_loss) / tf.maximum(tf.reduce_sum(mask), 1.)
-
-    def define_dynamics_prediction_rew(self, convfeat, rep_size, enlargement):
-        # Dynamics loss with random features.
-
-        # Random target network.
-        for ph in self.ph_ob.values():
-            if len(ph.shape.as_list()) == 5:  # B,T,H,W,C
-                logger.info("CnnTarget: using '%s' shape %s as image input" % (ph.name, str(ph.shape)))
-                xr = ph[:, 1:]
-                xr = tf.cast(xr, tf.float32)
-                xr = tf.reshape(xr, (-1, *ph.shape.as_list()[-3:]))[:, :, :, -1:]
-                xr = tf.clip_by_value((xr - self.ph_mean) / self.ph_std, -5.0, 5.0)
-
-                xr = tf.nn.leaky_relu(conv(xr, 'c1r', nf=convfeat * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
-                xr = tf.nn.leaky_relu(conv(xr, 'c2r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
-                xr = tf.nn.leaky_relu(conv(xr, 'c3r', nf=convfeat * 2 * 1, rf=1, stride=1, init_scale=np.sqrt(2)))
-                rgbr = [to2d(xr)]
-                X_r = fc(rgbr[0], 'fc1r', nh=rep_size, init_scale=np.sqrt(2))
-
-        # Predictor network.
-        ac_one_hot = tf.one_hot(self.ph_ac, self.ac_space.n, axis=2)
-        assert ac_one_hot.get_shape().ndims == 3
-        assert ac_one_hot.get_shape().as_list() == [None, None, self.ac_space.n], ac_one_hot.get_shape().as_list()
-        ac_one_hot = tf.reshape(ac_one_hot, (-1, self.ac_space.n))
-
-        def cond(x):
-            return tf.concat([x, ac_one_hot], 1)
-
-        for ph in self.ph_ob.values():
-            if len(ph.shape.as_list()) == 5:  # B,T,H,W,C
-                logger.info("CnnTarget: using '%s' shape %s as image input" % (ph.name, str(ph.shape)))
-                xrp = ph[:, :-1]
-                xrp = tf.cast(xrp, tf.float32)
-                xrp = tf.reshape(xrp, (-1, *ph.shape.as_list()[-3:]))
-                # ph_mean, ph_std are 84x84x1, so we subtract the average of the last channel from all channels. Is this ok?
-                xrp = tf.clip_by_value((xrp - self.ph_mean) / self.ph_std, -5.0, 5.0)
-
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c1rp_pred', nf=convfeat, rf=1, stride=1, init_scale=np.sqrt(2)))
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c2rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
-                xrp = tf.nn.leaky_relu(conv(xrp, 'c3rp_pred', nf=convfeat * 2, rf=1, stride=1, init_scale=np.sqrt(2)))
-                rgbrp = to2d(xrp)
-
-                # X_r_hat = tf.nn.relu(fc(rgb[0], 'fc1r_hat1', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                X_r_hat = tf.nn.relu(fc(cond(rgbrp), 'fc1r_hat1_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                X_r_hat = tf.nn.relu(fc(cond(X_r_hat), 'fc1r_hat2_pred', nh=256 * enlargement, init_scale=np.sqrt(2)))
-                X_r_hat = fc(cond(X_r_hat), 'fc1r_hat3_pred', nh=rep_size, init_scale=np.sqrt(2))
-
-        self.feat_var = tf.reduce_mean(tf.nn.moments(X_r, axes=[0])[1])
-        self.max_feat = tf.reduce_max(tf.abs(X_r))
-        self.int_rew = tf.reduce_mean(tf.square(tf.stop_gradient(X_r) - X_r_hat), axis=-1, keep_dims=True)
-        self.int_rew = tf.reshape(self.int_rew, (self.sy_nenvs, self.sy_nsteps - 1))
-
-        noisy_targets = tf.stop_gradient(X_r)
-        # self.aux_loss = tf.reduce_mean(tf.square(noisy_targets-X_r_hat))
-        self.aux_loss = tf.reduce_mean(tf.square(noisy_targets - X_r_hat), -1)
         mask = tf.random_uniform(shape=tf.shape(self.aux_loss), minval=0., maxval=1., dtype=tf.float32)
         mask = tf.cast(mask < self.proportion_of_exp_used_for_predictor_update, tf.float32)
         self.aux_loss = tf.reduce_sum(mask * self.aux_loss) / tf.maximum(tf.reduce_sum(mask), 1.)

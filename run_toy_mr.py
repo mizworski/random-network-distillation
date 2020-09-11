@@ -39,7 +39,9 @@ def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
             update_ob_stats_independently_per_gpu=hps.pop('update_ob_stats_independently_per_gpu'),
             proportion_of_exp_used_for_predictor_update=hps.pop('proportion_of_exp_used_for_predictor_update'),
             dynamics_bonus=hps.pop("dynamics_bonus"),
-            hidsize=hps.pop('hidsize')
+            hidsize=hps.pop('hidsize'),
+            single_slice_shape=(ob_space.shape[-1] // hps['frame_stack']),
+            rep_size=hps.pop('rep_size'),
         ),
         gamma=gamma,
         gamma_ext=hps.pop('gamma_ext'),
@@ -136,7 +138,7 @@ def main():
     args.add('gamma', 0.99)
     args.add('gamma_ext', 0.999)
     args.add('lam', 0.95)
-    args.add('update_ob_stats_every_step', 0)
+    # args.add('update_ob_stats_every_step', 0)
     args.add('update_ob_stats_independently_per_gpu', 0)
     args.add('update_ob_stats_from_random_agent', 1)
     args.add('proportion_of_exp_used_for_predictor_update', 1.)
@@ -171,6 +173,7 @@ def main():
         nminibatches=4,
         nepochs=parameters['nepochs'],
         nsteps=128,
+        rep_size=parameters['rep_size'],
         hidsize=parameters['hidsize'],
         lr=parameters['lr'],
         max_grad_norm=0.0,
@@ -180,7 +183,7 @@ def main():
         gamma_ext=args.gamma_ext,
         max_episode_steps=args.max_episode_steps,
         lam=args.lam,
-        update_ob_stats_every_step=args.update_ob_stats_every_step,
+        update_ob_stats_every_step=parameters['update_ob_stats_every_step'],
         update_ob_stats_independently_per_gpu=args.update_ob_stats_independently_per_gpu,
         update_ob_stats_from_random_agent=args.update_ob_stats_from_random_agent,
         proportion_of_exp_used_for_predictor_update=args.proportion_of_exp_used_for_predictor_update,

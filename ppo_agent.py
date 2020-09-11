@@ -237,6 +237,7 @@ class PpoAgent(object):
         self.dones_count = 0
         self.frame_stack = frame_stack
         self.env = env
+        self.single_slice_shape = ob_space.shape[-1] // frame_stack
 
     def start_interaction(self, venvs, disable_policy_update=False):
         self.I = InteractionState(ob_space=self.ob_space, ac_space=self.ac_space,
@@ -258,7 +259,7 @@ class PpoAgent(object):
                 all_ob.append(ob)
                 if len(all_ob) % (128 * self.I.nlump) == 0:
                     ob_ = np.asarray(all_ob).astype(np.float32).reshape((-1, *self.ob_space.shape))
-                    self.stochpol.ob_rms.update(ob_[:, :, :, -1:])
+                    self.stochpol.ob_rms.update(ob_[:, :, :, -self.single_slice_shape:])
                     all_ob.clear()
 
     def stop_interaction(self):
@@ -590,7 +591,8 @@ class PpoAgent(object):
 
             # Calcuate the intrinsic rewards for the rollout.
             fd = {}
-            fd[self.stochpol.ph_ob[None]] = np.concatenate([self.I.buf_obs[None], self.I.buf_ob_last[None][:, None]], 1)
+            ob_data = np.concatenate([self.I.buf_obs[None], self.I.buf_ob_last[None][:, None]], 1)
+            fd[self.stochpol.ph_ob[None]] = ob_data
             fd.update({self.stochpol.ph_mean: self.stochpol.ob_rms.mean,
                        self.stochpol.ph_std: self.stochpol.ob_rms.var ** 0.5})
             fd[self.stochpol.ph_ac] = self.I.buf_acs
