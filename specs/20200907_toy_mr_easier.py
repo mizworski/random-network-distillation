@@ -19,7 +19,7 @@ experiments_list = create_experiments_helper(
         "lr": [1e-4, 1e-5],
         # "lr": [1e-3],
         "frame_stack": [4],
-        'hidsize': [64, 256],
+        'predictor_hid_size': [64, 512],
         'rep_size': [8, 64],
         'nepochs': [1],
         'update_ob_stats_every_step': [True],

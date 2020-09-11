@@ -36,7 +36,7 @@ class CnnPolicy(StochasticPolicy):
                  single_slice_shape=1,
                  rep_size=256,
                  predictor_hid_size=512,
-                 random_hid_size=512,
+                 # random_hid_size=512,
                  ):
         StochasticPolicy.__init__(self, scope, ob_space, ac_space)
         self.proportion_of_exp_used_for_predictor_update = proportion_of_exp_used_for_predictor_update
@@ -80,6 +80,7 @@ class CnnPolicy(StochasticPolicy):
                               sy_nsteps=self.sy_nsteps,
                               pdparamsize=pdparamsize
                               )
+        random_hid_size = predictor_hid_size
         if dynamics_bonus:
             self.define_dynamics_prediction_rew(predictor_hid_size, random_hid_size, rep_size, enlargement,
                                                 single_slice_shape)
