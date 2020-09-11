@@ -5,7 +5,7 @@ experiments_list = create_experiments_helper(
     base_config={
         "env_id": "toy_mr",
         "env_size": None,
-        'max_episode_steps': 600,
+        "hidsize": 64,
 
     },
     params_grid={

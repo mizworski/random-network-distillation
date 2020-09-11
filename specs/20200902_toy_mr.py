@@ -5,8 +5,7 @@ experiments_list = create_experiments_helper(
     base_config={
         "idx":0,
         "env_size": None,
-        'hidsize': 50,
-        'max_episode_steps': 600,
+        "hidsize": 64,
     },
     params_grid={
         "idx": [0],

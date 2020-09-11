@@ -71,7 +71,7 @@ class InteractionState(object):
         self.mem_state = stochpol.initial_state(nenvs)
         self.seg_init_mem_state = copy(self.mem_state)  # Memory state at beginning of segment of timesteps
         self.rff_int = RewardForwardFilter(gamma)
-        self.rff_rms_int = RunningMeanStd(comm=comm, use_mpi=True)
+        self.rff_rms_int = RunningMeanStd(comm=comm, use_mpi=False)
         self.buf_new_last = self.buf_news[:, 0, ...].copy()
         self.buf_vpred_int_last = self.buf_vpreds_int[:, 0, ...].copy()
         self.buf_vpred_ext_last = self.buf_vpreds_ext[:, 0, ...].copy()
@@ -336,7 +336,7 @@ class PpoAgent(object):
             nextnotnew = 1 - nextnew
             delta = rews_int[:, t] + self.gamma * nextvals * nextnotnew - self.I.buf_vpreds_int[:, t]
             self.I.buf_advs_int[:, t] = lastgaelam = delta + self.gamma * self.lam * nextnotnew * lastgaelam
-        rets_int = self.I.buf_advs_int + self.I.buf_vpreds_int
+        rets_int = self.I.buf_advs_int + self.I.buf_vpreds_int # This is target to vpredint
 
         # Calculate extrinsic returns and advantages.
         lastgaelam = 0
@@ -401,8 +401,8 @@ class PpoAgent(object):
         envsperbatch = self.I.nenvs // self.nminibatches
         ph_buf = [
             (self.stochpol.ph_ac, self.I.buf_acs),
-            (self.ph_ret_int, rets_int),
-            (self.ph_ret_ext, rets_ext),
+            (self.ph_ret_int, rets_int), # Target to vpredint
+            (self.ph_ret_ext, rets_ext), # Target to vpredext
             (self.ph_oldnlp, self.I.buf_nlps),
             (self.ph_adv, self.I.buf_advs),
         ]

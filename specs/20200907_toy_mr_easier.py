@@ -5,12 +5,13 @@ experiments_list = create_experiments_helper(
     base_config={
         "env_id": "toy_mr",
         "env_size": None,
+        "hidsize": 64,
 
     },
     params_grid={
         "idx": [1],
         'map_file': [
-            'four_rooms.txt',
+            # 'four_rooms.txt',
             # 'hall_way_shifted.txt',
             'full_mr_map_easy.txt',
         ],
