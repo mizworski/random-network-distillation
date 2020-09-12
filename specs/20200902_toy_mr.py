@@ -20,7 +20,7 @@ experiments_list = create_experiments_helper(
         'predictor_hid_size': [64, 512],
         'rep_size': [8, 64],
         'nepochs': [1],
-        'update_ob_stats_every_step': [True, False],
+        'update_ob_stats_every_step': [False],
         # "frame_stack": [1, 4],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',

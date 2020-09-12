@@ -61,7 +61,8 @@ def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
         ext_coeff=hps.pop('ext_coeff'),
         use_neptune=use_neptune,
         frame_stack=hps.pop('frame_stack'),
-        env=ToyMR(map_file)
+        env=ToyMR(map_file),
+        vf_coef=hps.pop('vf_coeff'),
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):
@@ -192,7 +193,8 @@ def main():
         policy=args.policy,
         int_coeff=args.int_coeff,
         ext_coeff=args.ext_coeff,
-        dynamics_bonus=args.dynamics_bonus
+        dynamics_bonus=args.dynamics_bonus,
+        vf_coeff=parameters['vf_coeff'],
     )
 
     tf_util.make_session(make_default=True)
