@@ -23,6 +23,7 @@ experiments_list = create_experiments_helper(
         'nepochs': [1],
         'update_ob_stats_every_step': [False],
         # "frame_stack": [1, 4],
+        "vf_coeff": [1],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',
     exclude=['.pytest_cache', '.vagrant', '__pycache__',

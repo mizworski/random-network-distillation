@@ -26,7 +26,7 @@ experiments_list = create_experiments_helper(
         # 'rep_size': [8, 64],
         'rep_size': [64],
         'nepochs': [1],
-        "vf_coeff": [11],
+        "vf_coeff": [1],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',
     exclude=['.pytest_cache', '.vagrant', '__pycache__',
