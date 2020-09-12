@@ -107,7 +107,7 @@ def main():
     debug = cmd_args.debug
     spec_path = cmd_args.config[0]
 
-    if not debug:
+    if True:
         try:
             with open(spec_path, 'rb') as f:
                 import cloudpickle
@@ -119,9 +119,6 @@ def main():
                 specification = vars_['experiments_list'][0].to_dict()
                 print('NOTE: Only the first experiment from the list will be run!')
         parameters = specification['parameters']
-    else:
-        print("debug run")
-        parameters = dict(map_file=cmd_args.map_file, env_size=None)
 
     class MockArgs(object):
         def add(self, key, value):

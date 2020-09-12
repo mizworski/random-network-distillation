@@ -751,9 +751,25 @@ class ToyMR(gym.Env):
         # return self._get_encoded_room(), reward, self.is_current_state_terminal(), {}
         obs = self.get_np_state()
         done = self.is_current_state_terminal()
+        observation_labels = self._get_dense_obs_labels()
+        keys_taken_mask = [
+            1 - obs[0, 0, idx]
+            for idx, label in enumerate(observation_labels)
+            if 'key_' in label
+        ]
+        nb_keys_taken_e = sum(keys_taken_mask)
+
+        doors_opened_mask = [
+            1 - obs[0, 0, idx]
+            for idx, label in enumerate(observation_labels)
+            if 'door_' in label
+        ]
+        nb_doors_opened_e = sum(doors_opened_mask)
         info = {
             "solved": self.room == self.goal_room,
             "room_first_visit": self.room_first_visit,
+            "nb_keys_taken": nb_keys_taken_e,
+            "nb_doors_opened": nb_doors_opened_e,
         }
         return obs, reward, done, info
 

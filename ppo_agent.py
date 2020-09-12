@@ -77,7 +77,7 @@ class InteractionState(object):
         self.buf_vpred_ext_last = self.buf_vpreds_ext[:, 0, ...].copy()
         self.step_count = 0  # counts number of timesteps that you've interacted with this set of environments
         self.t_last_update = time.time()
-        self.statlists = defaultdict(lambda: deque([], maxlen=100))  # Count other stats, e.g. optimizer outputs
+        self.statlists = defaultdict(lambda: deque([], maxlen=self.lump_stride))  # Count other stats, e.g. optimizer outputs
         self.stats = defaultdict(float)  # Count episodes and timesteps
         self.stats['epcount'] = 0
         self.stats['n_updates'] = 0
@@ -511,6 +511,8 @@ class PpoAgent(object):
         t = self.I.step_count % self.nsteps
         epinfos = []
         episodes_visited_rooms = []
+        episodes_keys_taken = []
+        episodes_doors_opened = []
         for l in range(self.I.nlump):
             obs, prevrews, news, infos = self.env_get(l)
             if news[0]:
@@ -545,6 +547,8 @@ class PpoAgent(object):
                     #     'visited_rooms': visited_rooms
                     # }
                     episodes_visited_rooms.append(visited_rooms)
+                    episodes_keys_taken.append(info['nb_keys_taken'])
+                    episodes_doors_opened.append(info['nb_doors_opened'])
 
             sli = slice(l * self.I.lump_stride, (l + 1) * self.I.lump_stride)
             memsli = slice(None) if self.I.mem_state is NO_STATES else sli
@@ -626,6 +630,8 @@ class PpoAgent(object):
             self.local_rooms += list(visited_rooms)
             self.local_rooms = sorted(list(set(self.local_rooms)))
             self.I.statlists['eprooms'].append(len(visited_rooms))
+        self.I.statlists['epkeys'].extend(episodes_keys_taken)
+        self.I.statlists['epdoors'].extend(episodes_doors_opened)
         for epinfo in epinfos:
             if self.testing:
                 self.I.statlists['eprew_test'].append(epinfo['r'])
