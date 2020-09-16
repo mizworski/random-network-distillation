@@ -1,7 +1,7 @@
 from mrunner.helpers.specification_helper import create_experiments_helper
 
 experiments_list = create_experiments_helper(
-    experiment_name='rnd_toymr_easier',
+    experiment_name='rnd_toymr',
     base_config={
         "env_id": "toy_mr",
         "env_size": None,
@@ -21,12 +21,12 @@ experiments_list = create_experiments_helper(
 
     },
     params_grid={
-        "idx": [0, 1],
         'map_file': [
             # 'four_rooms.txt',
             # 'hall_way_shifted.txt',
-            'full_mr_map_easy.txt',
+            # 'full_mr_map_easy.txt',
             'full_mr_map_medium.txt',
+            'full_mr_map.txt',
         ],
         "lr": [5e-4, 1e-4],
         'rep_size': [64],
@@ -34,9 +34,9 @@ experiments_list = create_experiments_helper(
         "int_coeff": [0, 1],
 
         'nepochs': [16],
-        'proportion_of_exp': [0.25, 1.],
+        'proportion_of_exp': [0.25, 0.5, 1.],
 
-        # 'lam': [0.95, 0.99],
+        'hidsize': [64, 256],
         # 'gamma': [0.99, 0.999],
         # 'gamma_ext': [0.999, 0.9999],
     },
@@ -45,6 +45,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', 'easier', '15_09_20', 'fast', 'lr_grid'],
+    tags=[globals()['script'][:-3], 'rnd', '16_09_20', 'eagle', 'harder'],
     with_neptune=True
 )

@@ -134,18 +134,19 @@ def main():
     args.add('num_timesteps', int(1e12))
     args.add('num_env', 32)
     args.add('use_news', 0)
-    args.add('gamma', 0.99)
-    args.add('gamma_ext', 0.999)
-    args.add('lam', 0.95)
+    args.add('gamma', parameters['gamma'])
+    args.add('gamma_ext', parameters['gamma_ext'])
+    args.add('lam', parameters['lam'])
     # args.add('update_ob_stats_every_step', 0)
     args.add('update_ob_stats_independently_per_gpu', 0)
     args.add('update_ob_stats_from_random_agent', 1)
-    args.add('proportion_of_exp_used_for_predictor_update', 1.)
+    args.add('proportion_of_exp_used_for_predictor_update', parameters['proportion_of_exp'])
     args.add('tag', '')
     args.add('policy', 'cnn', )
     args.add('int_coeff', parameters['int_coeff'])
-    args.add('ext_coeff', 2.)
+    args.add('ext_coeff', parameters['ext_coeff'])
     args.add('dynamics_bonus', 0)
+    args.add('vf_coeff', parameters['vf_coeff'])
 
     if not debug:
         # TODO read more from specification
@@ -191,7 +192,7 @@ def main():
         int_coeff=args.int_coeff,
         ext_coeff=args.ext_coeff,
         dynamics_bonus=args.dynamics_bonus,
-        vf_coeff=parameters['vf_coeff'],
+        vf_coeff=args.vf_coeff,
     )
 
     tf_util.make_session(make_default=True)

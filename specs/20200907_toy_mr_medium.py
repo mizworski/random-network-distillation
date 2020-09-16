@@ -21,30 +21,30 @@ experiments_list = create_experiments_helper(
 
     },
     params_grid={
-        "idx": [0, 1],
+        "idx": [1],
         'map_file': [
-            # 'four_rooms.txt',
-            # 'hall_way_shifted.txt',
-            'full_mr_map_easy.txt',
             'full_mr_map_medium.txt',
         ],
-        "lr": [5e-4, 1e-4],
+        "lr": [1e-4, 1e-5],
         'rep_size': [64],
 
-        "int_coeff": [0, 1],
+        "int_coeff": [0, 1, 10],
+        # "int_coeff": [1, 10],
+        # "ext_coeff": [1, 100],
 
         'nepochs': [16],
+        # 'nepochs': [4, 16],
         'proportion_of_exp': [0.25, 1.],
 
         # 'lam': [0.95, 0.99],
-        # 'gamma': [0.99, 0.999],
-        # 'gamma_ext': [0.999, 0.9999],
+        'gamma': [0.99, 0.9999],
+        'gamma_ext': [0.999, 0.99999],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',
     exclude=['.pytest_cache', '.vagrant', '__pycache__',
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', 'easier', '15_09_20', 'fast', 'lr_grid'],
+    tags=[globals()['script'][:-3], 'rnd', 'medium', '13_09_20', 'fast'],
     with_neptune=True
 )
