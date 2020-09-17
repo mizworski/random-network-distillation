@@ -406,6 +406,7 @@ class ToyMR(gym.Env):
         self.observation_space = Box(low=0, high=255, shape=np_state.shape,
                                      dtype=np.uint8)
         self.state_space = self.observation_space  # state == observation
+        print(self.observation_space)
 
     @staticmethod
     def obs2state(observation, copy=True):

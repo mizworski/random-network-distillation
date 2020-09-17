@@ -132,7 +132,8 @@ class PpoAgent(object):
                  ext_coeff=None,
                  use_neptune=False,
                  frame_stack=4,
-                 env=None
+                 env=None,
+                 log_heat_maps=True
                  ):
         self.lr = lr
         self.use_neptune = use_neptune
@@ -238,6 +239,7 @@ class PpoAgent(object):
         self.frame_stack = frame_stack
         self.env = env
         self.single_slice_shape = ob_space.shape[-1] // frame_stack
+        self.log_heat_maps = log_heat_maps
 
     def start_interaction(self, venvs, disable_policy_update=False):
         self.I = InteractionState(ob_space=self.ob_space, ac_space=self.ac_space,
@@ -513,11 +515,13 @@ class PpoAgent(object):
         episodes_visited_rooms = []
         episodes_keys_taken = []
         episodes_doors_opened = []
+        states_visited_in_epoch = []
+        states_visited_in_history = []
         for l in range(self.I.nlump):
             obs, prevrews, news, infos = self.env_get(l)
             if news[0]:
                 self.dones_count += 1
-            if self.dones_count % 20 == 0:
+            if self.log_heat_maps and self.dones_count % 20 == 0:
                 self.log_heat_map(np.stack(self.episode_observations))
                 self.episode_observations = []
                 self.dones_count += 1
@@ -549,6 +553,10 @@ class PpoAgent(object):
                     episodes_visited_rooms.append(visited_rooms)
                     episodes_keys_taken.append(info['nb_keys_taken'])
                     episodes_doors_opened.append(info['nb_doors_opened'])
+                if 'visited_states_in_episode' in info and done:
+                    states_visited_in_epoch.append(info['visited_states_in_episode'])
+                if 'visited_states_in_history' in info and done:
+                    states_visited_in_history.append(info['visited_states_in_history'])
 
             sli = slice(l * self.I.lump_stride, (l + 1) * self.I.lump_stride)
             memsli = slice(None) if self.I.mem_state is NO_STATES else sli
@@ -630,8 +638,16 @@ class PpoAgent(object):
             self.local_rooms += list(visited_rooms)
             self.local_rooms = sorted(list(set(self.local_rooms)))
             self.I.statlists['eprooms'].append(len(visited_rooms))
-        self.I.statlists['epkeys'].extend(episodes_keys_taken)
-        self.I.statlists['epdoors'].extend(episodes_doors_opened)
+        if episodes_keys_taken:
+            self.I.statlists['epkeys'].extend(episodes_keys_taken)
+        if episodes_doors_opened:
+            self.I.statlists['epdoors'].extend(episodes_doors_opened)
+        if states_visited_in_epoch:
+            self.I.statlists['visited_states_in_episode'].extend(states_visited_in_epoch)
+
+        if states_visited_in_history:
+            self.I.statlists['visited_states_in_history'].extend(states_visited_in_history)
+
         for epinfo in epinfos:
             if self.testing:
                 self.I.statlists['eprew_test'].append(epinfo['r'])
