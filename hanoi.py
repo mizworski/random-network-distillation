@@ -26,7 +26,7 @@ class Hanoi(gym.Env):
                        shape=(1, 1, self.n_disks * 3),
                        dtype=np.uint8,
                        )
-        # print(self.observation_space)
+
         self._current_state = None
         self.goal_state = self.n_disks * (2,)
 
@@ -84,7 +84,7 @@ class Hanoi(gym.Env):
         return HashableNdarray(np.array(self._current_state, dtype=np.uint8))
 
     def restore_state(self, state):
-        self._current_state = tuple(state.array)
+        self._current_state = self.obs2tuple(state.array)
         self.done = self._current_state == self.goal_state
 
     def obs2tuple(self, obs):
@@ -163,7 +163,6 @@ class Hanoi(gym.Env):
                 visited_states[state] += 1
                 visited_set.add(state)
                 self._visited_states_in_history.add(state)
-                self._visited_states_in_episode.add(state)
             visited_sets_episodes.append(visited_set)
             if episode.solved:
                 visited_states[self.goal_state] += 1
