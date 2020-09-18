@@ -418,6 +418,13 @@ class ToyMR(gym.Env):
     def state2obs(state):
         return state.array
 
+    def clone_state(self):
+        return self.clone_full_state()
+
+    def restore_state(self, state):
+        self.restore_full_state(state)
+        return self.render(mode='one_hot')
+
     @property
     def init_kwargs(self):
         return {
@@ -518,6 +525,7 @@ class ToyMR(gym.Env):
         # We will use this for structure and names, and ignore values
         assert state_np.shape == self.observation_space.shape
         # state_np = state_np[:, 0, 0]  # remove unused dimensions
+        state_np = np.squeeze(state_np, axis=(0, 1))
         state_tuple_template = self.get_state_named_tuple()
         self.agent = None
 
