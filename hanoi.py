@@ -87,10 +87,9 @@ class Hanoi(gym.Env):
                 np.array(self.obs2tuple(self.vectorized_obs())))
             )
 
-        if self.done:
-            info.update(self.compute_metrics())
-            if hasattr(self, 'graph_distance'):
-                info.update(self.graph_distance.result())
+        info.update(self.compute_metrics())
+        if hasattr(self, 'graph_distance'):
+            info.update(self.graph_distance.result())
 
         self._visited_states_in_episode.add(self.obs2state(obs))
         self._visited_states_in_history.add(self.obs2state(obs))

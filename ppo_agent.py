@@ -517,6 +517,8 @@ class PpoAgent(object):
         episodes_doors_opened = []
         states_visited_in_epoch = []
         states_visited_in_history = []
+        max_distance_from_start_in_history = []
+        min_distance_to_goal_in_history = []
         for l in range(self.I.nlump):
             obs, prevrews, news, infos = self.env_get(l)
             if news[0]:
@@ -557,6 +559,10 @@ class PpoAgent(object):
                     states_visited_in_epoch.append(info['visited_states_in_episode'])
                 if 'visited_states_in_history' in info and done:
                     states_visited_in_history.append(info['visited_states_in_history'])
+                if 'max_distance_from_start_in_history' in info and done:
+                    max_distance_from_start_in_history.append(info['max_distance_from_start_in_history'])
+                if 'min_distance_to_goal_in_history' in info and done:
+                    min_distance_to_goal_in_history.append(info['min_distance_to_goal_in_history'])
 
             sli = slice(l * self.I.lump_stride, (l + 1) * self.I.lump_stride)
             memsli = slice(None) if self.I.mem_state is NO_STATES else sli
@@ -647,6 +653,10 @@ class PpoAgent(object):
 
         if states_visited_in_history:
             self.I.statlists['visited_states_in_history'].extend(states_visited_in_history)
+        if max_distance_from_start_in_history:
+            self.I.statlists['max_distance_from_start_in_history'].extend(max_distance_from_start_in_history)
+        if min_distance_to_goal_in_history:
+            self.I.statlists['min_distance_to_goal_in_history'].extend(min_distance_to_goal_in_history)
 
         for epinfo in epinfos:
             if self.testing:
