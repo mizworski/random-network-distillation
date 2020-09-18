@@ -7,6 +7,7 @@ import gym
 from gym import spaces
 import numpy as np
 
+from graph_distance_logging import GraphDistanceLogger
 from hanoi_helpers import HanoiHelper
 from toy_mr import HashableNdarray
 
@@ -46,6 +47,11 @@ class Hanoi(gym.Env):
         self._all_transitions = self.helper.generate_all_transitions()
         self._visited_states_in_episode = set()
         self._visited_states_in_history = set()
+        self._min_distance_to_goal = float('inf')
+        self._max_distance_from_start = 0
+
+        self.reset()
+        self.graph_distance = GraphDistanceLogger(self)
 
     def step(self, action):
         if self.done:
@@ -73,18 +79,33 @@ class Hanoi(gym.Env):
         else:
             reward = 0
         # HACK - make observation an image for RND code
-        state = np.expand_dims(self.vectorized_obs(), 0)
-        state = np.expand_dims(state, 0)
+        obs = np.expand_dims(self.vectorized_obs(), 0)
+        obs = np.expand_dims(obs, 0)
 
-        info.update(self.compute_metrics())
+        if hasattr(self, 'graph_distance'):
+            self.graph_distance.update_distances(self.obs2state(
+                np.array(self.obs2tuple(self.vectorized_obs())))
+            )
 
-        return state, reward, self.done, info
+        if self.done:
+            info.update(self.compute_metrics())
+            if hasattr(self, 'graph_distance'):
+                info.update(self.graph_distance.result())
+
+        self._visited_states_in_episode.add(self.obs2state(obs))
+        self._visited_states_in_history.add(self.obs2state(obs))
+
+        return obs, reward, self.done, info
 
     def clone_state(self):
         return HashableNdarray(np.array(self._current_state, dtype=np.uint8))
 
     def restore_state(self, state):
-        self._current_state = self.obs2tuple(state.array)
+        obs = np.squeeze(state.array)
+        if len(state.array.shape) == 1:
+            self._current_state = tuple(obs)
+        else:
+            self._current_state = self.obs2tuple(obs)
         self.done = self._current_state == self.goal_state
 
     def obs2tuple(self, obs):
@@ -99,7 +120,6 @@ class Hanoi(gym.Env):
         if copy:
             observation = deepcopy(observation)
         return HashableNdarray(observation)
-
 
     def vectorized_obs(self):
         return np.eye(3)[np.array(self._current_state)].flatten()
@@ -139,9 +159,9 @@ class Hanoi(gym.Env):
         self._visited_states_in_episode = set()
         self.done = False
         # HACK - make observation an image for RND code
-        state = np.expand_dims(self.vectorized_obs(), 0)
-        state = np.expand_dims(state, 0)
-        return state
+        obs = np.expand_dims(self.vectorized_obs(), 0)
+        obs = np.expand_dims(obs, 0)
+        return obs
 
     def render(self, mode='human'):
         for peg in range(3):
