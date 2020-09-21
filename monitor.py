@@ -44,6 +44,9 @@ class Monitor(Wrapper):
         self.total_steps = 0
         self.current_reset_info = {}  # extra info about the current episode, that was passed in during reset()
 
+    def reset_history(self):
+        self.env.reset_history()
+
     def reset(self, **kwargs):
         if not self.allow_early_resets and not self.needs_reset:
             raise RuntimeError(

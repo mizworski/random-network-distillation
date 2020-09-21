@@ -15,6 +15,8 @@ from gym.spaces.discrete import Discrete
 from matplotlib.colors import to_rgb
 from matplotlib.pyplot import cm
 
+from graph_distance_logging import GraphDistanceLogger
+
 
 def _get_hash_key(size):
     state = np.random.get_state()
@@ -408,6 +410,10 @@ class ToyMR(gym.Env):
         self.state_space = self.observation_space  # state == observation
         print(self.observation_space)
 
+        self._visited_states_in_episode = set()
+        self._visited_states_in_history = set()
+        self.graph_distance = GraphDistanceLogger(self)
+
     @staticmethod
     def obs2state(observation, copy=True):
         if copy:
@@ -780,11 +786,30 @@ class ToyMR(gym.Env):
             "nb_keys_taken": nb_keys_taken_e,
             "nb_doors_opened": nb_doors_opened_e,
         }
+        if hasattr(self, 'graph_distance'):
+            self.graph_distance.update_distances(self.obs2state(obs))
+
+        if hasattr(self, 'graph_distance'):
+            info.update(self.graph_distance.result())
+
+        self._visited_states_in_episode.add(self.obs2state(obs))
+        self._visited_states_in_history.add(self.obs2state(obs))
+
+        info.update({
+            'visited_states_in_episode': len(self._visited_states_in_episode),
+            # 'visited_states_in_history': len(self._visited_states_in_history),
+        })
+
         return obs, reward, done, info
+
+    def reset_history(self, x):
+        self._visited_states_in_episode = set()
+        self._visited_states_in_history = set()
 
     def reset(self):
         self.room = self.starting_room
         self.agent = self.starting_cell
+        self._visited_states_in_episode = set()
         self.num_keys = 0
         self.room_first_visit = {loc: None for loc in self.rooms.keys()}
         self.t = 0

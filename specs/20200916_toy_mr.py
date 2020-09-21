@@ -25,18 +25,18 @@ experiments_list = create_experiments_helper(
             # 'four_rooms.txt',
             # 'hall_way_shifted.txt',
             # 'full_mr_map_easy.txt',
-            'full_mr_map_medium.txt',
+            # 'full_mr_map_medium.txt',
             'full_mr_map.txt',
         ],
-        "lr": [5e-4, 1e-4],
+        "lr": [5e-4, 1e-4, 5e-5],
         'rep_size': [64],
 
         "int_coeff": [0, 1],
 
         'nepochs': [16],
-        'proportion_of_exp': [0.25, 0.5, 1.],
 
-        'hidsize': [64, 256],
+        'idx': [0, 1, 2, 4],
+
         # 'gamma': [0.99, 0.999],
         # 'gamma_ext': [0.999, 0.9999],
     },
@@ -45,6 +45,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', '16_09_20', 'eagle', 'harder'],
+    tags=[globals()['script'][:-3], 'rnd', '20_09_20', 'eagle', 'harder'],
     with_neptune=True
 )

@@ -14,9 +14,9 @@ from utils import set_global_seeds
 from vec_env import VecFrameStack
 
 
-def train(*, map_file, num_env, hps, num_timesteps, seed, use_neptune=False):
+def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
     venv = VecFrameStack(
-        make_toy_mr_env(map_file, num_env, seed, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
+        make_toy_mr_env(map_file, num_env, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
                         start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
                         max_episode_steps=hps.pop('max_episode_steps')),
         hps['frame_stack'])
@@ -165,8 +165,8 @@ def main():
 
     logger.configure(dir="out", format_strs=baselines_format_strs)
 
-    seed = 10000 * args.seed  # + MPI.COMM_WORLD.Get_rank()
-    set_global_seeds(seed)
+    # seed = 10000 * args.seed  # + MPI.COMM_WORLD.Get_rank()
+    # set_global_seeds(seed)
 
     hps = dict(
         frame_stack=parameters['frame_stack'],
@@ -196,7 +196,7 @@ def main():
     )
 
     tf_util.make_session(make_default=True)
-    train(map_file=args.map_file, num_env=args.num_env, seed=seed,
+    train(map_file=args.map_file, num_env=args.num_env,
           num_timesteps=args.num_timesteps, hps=hps, use_neptune=(not debug))
 
 

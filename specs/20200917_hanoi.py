@@ -20,7 +20,7 @@ experiments_list = create_experiments_helper(
     },
     params_grid={
         "n_disks": [6, 7],
-        "lr": [5e-4, 1e-4],
+        "lr": [5e-5, 1e-5],
         'rep_size': [64],
 
         "int_coeff": [0, 1],
@@ -37,6 +37,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', '18_09_20', 'eagle', 'hanoi'],
+    tags=[globals()['script'][:-3], 'rnd', '19_09_20', 'eagle', 'hanoi'],
     with_neptune=True
 )

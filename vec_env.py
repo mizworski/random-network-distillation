@@ -100,6 +100,9 @@ class VecEnvWrapper(VecEnv):
     def step_async(self, actions):
         self.venv.step_async(actions)
 
+    def reset_history(self):
+        self.venv.reset_history()
+
     @abstractmethod
     def reset(self):
         pass
@@ -225,6 +228,8 @@ def worker(remote, parent_remote, env_fn_wrapper):
             break
         elif cmd == 'get_spaces':
             remote.send((env.observation_space, env.action_space))
+        elif cmd == 'reset_history':
+            env.reset_history()
         else:
             raise NotImplementedError
 
@@ -253,6 +258,11 @@ class SubprocVecEnv(VecEnv):
     def step_async(self, actions):
         for remote, action in zip(self.remotes, actions):
             remote.send(('step', action))
+        self.waiting = True
+
+    def reset_history(self):
+        for remote in self.remotes:
+            remote.send(('reset_history', 0))
         self.waiting = True
 
     def step_wait(self):

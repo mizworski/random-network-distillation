@@ -264,6 +264,10 @@ class PpoAgent(object):
                     self.stochpol.ob_rms.update(ob_[:, :, :, -self.single_slice_shape:])
                     all_ob.clear()
 
+        # for lump in range(self.I.nlump):
+        #     self.I.venvs[lump].reset_history()
+
+
     def stop_interaction(self):
         self.I.close()
         self.I = None
