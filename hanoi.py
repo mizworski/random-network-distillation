@@ -193,7 +193,7 @@ class Hanoi(gym.Env):
                           for state in self._all_states}
         return visited_states, visited_freq
 
-    def reset_history(self, x):
+    def reset_history(self):
         self._visited_states_in_episode = set()
         self._visited_states_in_history = set()
 

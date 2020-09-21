@@ -797,12 +797,12 @@ class ToyMR(gym.Env):
 
         info.update({
             'visited_states_in_episode': len(self._visited_states_in_episode),
-            # 'visited_states_in_history': len(self._visited_states_in_history),
+            'visited_states_in_history': len(self._visited_states_in_history),
         })
 
         return obs, reward, done, info
 
-    def reset_history(self, x):
+    def reset_history(self):
         self._visited_states_in_episode = set()
         self._visited_states_in_history = set()
 

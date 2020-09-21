@@ -168,6 +168,9 @@ class VecFrameStack(VecEnvWrapper):
     def close(self):
         self.venv.close()
 
+    def reset_history(self):
+        self.venv.reset_history()
+
 
 class VecFrameStack(VecEnvWrapper):
     """
@@ -203,6 +206,9 @@ class VecFrameStack(VecEnvWrapper):
 
     def close(self):
         self.venv.close()
+
+    def reset_history(self):
+        self.venv.reset_history()
 
 
 

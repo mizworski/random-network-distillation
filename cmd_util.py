@@ -11,7 +11,37 @@ from atari_wrappers import make_atari, wrap_deepmind, make_toy_mr
 from baselines import logger
 from monitor import Monitor
 from vec_env import SubprocVecEnv
+import gym
 
+
+
+
+class TimeLimit(gym.Wrapper):
+    def __init__(self, env, max_episode_steps=None):
+        super(TimeLimit, self).__init__(env)
+        if max_episode_steps is None and self.env.spec is not None:
+            max_episode_steps = env.spec.max_episode_steps
+        if self.env.spec is not None:
+            self.env.spec.max_episode_steps = max_episode_steps
+        self._max_episode_steps = max_episode_steps
+        self._elapsed_steps = None
+
+    def step(self, action):
+        assert self._elapsed_steps is not None, "Cannot call env.step() before calling reset()"
+        observation, reward, done, info = self.env.step(action)
+        self._elapsed_steps += 1
+        if self._elapsed_steps >= self._max_episode_steps:
+            info['TimeLimit.truncated'] = not done
+            done = True
+        return observation, reward, done, info
+
+
+    def reset(self, **kwargs):
+        self._elapsed_steps = 0
+        return self.env.reset(**kwargs)
+
+    def reset_history(self):
+        self.env.reset_history()
 
 def make_atari_env(env_id, num_env, seed, wrapper_kwargs=None, start_index=0, max_episode_steps=4500):
     """
@@ -74,7 +104,7 @@ def make_hanoi(n_disks, max_episode_steps=300):
     from hanoi import Hanoi
     from gym import wrappers
     env = Hanoi(n_disks)
-    env = wrappers.TimeLimit(env, max_episode_steps=max_episode_steps)
+    env = TimeLimit(env, max_episode_steps=max_episode_steps)
     return env
 
 

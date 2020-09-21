@@ -77,7 +77,7 @@ class InteractionState(object):
         self.buf_vpred_ext_last = self.buf_vpreds_ext[:, 0, ...].copy()
         self.step_count = 0  # counts number of timesteps that you've interacted with this set of environments
         self.t_last_update = time.time()
-        self.statlists = defaultdict(lambda: deque([], maxlen=self.lump_stride))  # Count other stats, e.g. optimizer outputs
+        self.statlists = defaultdict(lambda: deque([], maxlen=50))  # Count other stats, e.g. optimizer outputs
         self.stats = defaultdict(float)  # Count episodes and timesteps
         self.stats['epcount'] = 0
         self.stats['n_updates'] = 0
@@ -264,8 +264,8 @@ class PpoAgent(object):
                     self.stochpol.ob_rms.update(ob_[:, :, :, -self.single_slice_shape:])
                     all_ob.clear()
 
-        # for lump in range(self.I.nlump):
-        #     self.I.venvs[lump].reset_history()
+        for lump in range(self.I.nlump):
+            self.I.venvs[lump].reset_history()
 
 
     def stop_interaction(self):
@@ -633,10 +633,13 @@ class PpoAgent(object):
             global_deque_mean = dict_gather(self.comm_log, {n: np.mean(dvs) for n, dvs in self.I.statlists.items()},
                                             op='mean')
             global_deque_max = dict_gather(
-                self.comm_log, {f"{n}_max": max(dvs) for n, dvs in self.I.statlists.items() if dvs}, op='mean')
+                self.comm_log, {f"{n}_max": max(dvs) for n, dvs in self.I.statlists.items() if dvs}, op='max')
+            global_deque_min = dict_gather(
+                self.comm_log, {f"{n}_max": min(dvs) for n, dvs in self.I.statlists.items() if dvs}, op='min')
             update_info.update(global_i_stats)
             update_info.update(global_deque_mean)
             update_info.update(global_deque_max)
+            update_info.update(global_deque_min)
             self.global_tcount = global_i_stats['tcount']
             for infos_ in self.I.buf_epinfos:
                 infos_.clear()
