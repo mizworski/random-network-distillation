@@ -51,7 +51,7 @@ class Hanoi(gym.Env):
         self._max_distance_from_start = 0
 
         self.reset()
-        # self.graph_distance = GraphDistanceLogger(self)
+        self.graph_distance = GraphDistanceLogger(self)
 
     def step(self, action):
         if self.done:

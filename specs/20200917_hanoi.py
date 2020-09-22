@@ -26,6 +26,7 @@ experiments_list = create_experiments_helper(
         "int_coeff": [0, 1],
 
         'nepochs': [16],
+        'idx': [0, 1, 2],
         # 'proportion_of_exp': [0.25, 1.],
 
         # 'hidsize': [64, 256],
@@ -37,6 +38,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', '21_09_20', 'eagle', 'hanoi'],
+    tags=[globals()['script'][:-3], 'rnd', 'hanoi', '22_09_20', 'eagle', 'final'],
     with_neptune=True
 )
