@@ -547,7 +547,7 @@ class PpoAgent(object):
 
             for env_pos_in_lump, (ob, info, done) in enumerate(zip(obs, infos, news)):
                 if done:
-                    info.update(self.env.calculate_statistics(ob[0, 0, -obs_len:]))
+                    info.update(self.env.calculate_statistics(ob[..., -obs_len:]))
                     if isinstance(self.env, ToyMR):
                         info.update(self.graph_distance.result())
                 if 'episode' in info:
