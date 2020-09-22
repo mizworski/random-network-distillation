@@ -28,7 +28,7 @@ experiments_list = create_experiments_helper(
             # 'full_mr_map_medium.txt',
             'full_mr_map.txt',
         ],
-        "lr": [5e-4, 1e-4, 5e-5],
+        "lr": [1e-4, 5e-5, 1e-5],
         'rep_size': [64],
 
         "int_coeff": [0, 1],
@@ -45,6 +45,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', '20_09_20', 'eagle', 'harder'],
+    tags=[globals()['script'][:-3], 'rnd', '21_09_20', 'eagle', 'harder'],
     with_neptune=True
 )

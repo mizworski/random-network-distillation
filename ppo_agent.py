@@ -635,7 +635,7 @@ class PpoAgent(object):
             global_deque_max = dict_gather(
                 self.comm_log, {f"{n}_max": max(dvs) for n, dvs in self.I.statlists.items() if dvs}, op='max')
             global_deque_min = dict_gather(
-                self.comm_log, {f"{n}_max": min(dvs) for n, dvs in self.I.statlists.items() if dvs}, op='min')
+                self.comm_log, {f"{n}_min": min(dvs) for n, dvs in self.I.statlists.items() if dvs}, op='min')
             update_info.update(global_i_stats)
             update_info.update(global_deque_mean)
             update_info.update(global_deque_max)
