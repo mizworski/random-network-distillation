@@ -63,6 +63,7 @@ def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
         frame_stack=hps.pop('frame_stack'),
         env=ToyMR(map_file),
         vf_coef=hps.pop('vf_coeff'),
+        num_env=num_env,
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):

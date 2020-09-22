@@ -51,7 +51,7 @@ class Hanoi(gym.Env):
         self._max_distance_from_start = 0
 
         self.reset()
-        self.graph_distance = GraphDistanceLogger(self)
+        # self.graph_distance = GraphDistanceLogger(self)
 
     def step(self, action):
         if self.done:
@@ -98,6 +98,9 @@ class Hanoi(gym.Env):
 
     def clone_state(self):
         return HashableNdarray(np.array(self._current_state, dtype=np.uint8))
+
+    def calculate_statistics(self, obs):
+        return {}
 
     def restore_state(self, state):
         obs = np.squeeze(state.array)

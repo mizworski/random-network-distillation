@@ -412,7 +412,7 @@ class ToyMR(gym.Env):
 
         self._visited_states_in_episode = set()
         self._visited_states_in_history = set()
-        self.graph_distance = GraphDistanceLogger(self)
+        # self.graph_distance = GraphDistanceLogger(self)
 
     @staticmethod
     def obs2state(observation, copy=True):
@@ -766,6 +766,13 @@ class ToyMR(gym.Env):
         # return self._get_encoded_room(), reward, self.is_current_state_terminal(), {}
         obs = self.get_np_state()
         done = self.is_current_state_terminal()
+        info = {
+            "solved": self.room == self.goal_room,
+            "room_first_visit": self.room_first_visit
+        }
+        return obs, reward, done, info
+
+    def calculate_statistics(self, obs):
         observation_labels = self._get_dense_obs_labels()
         keys_taken_mask = [
             1 - obs[0, 0, idx]
@@ -799,8 +806,7 @@ class ToyMR(gym.Env):
             'visited_states_in_episode': len(self._visited_states_in_episode),
             'visited_states_in_history': len(self._visited_states_in_history),
         })
-
-        return obs, reward, done, info
+        return info
 
     def reset_history(self):
         self._visited_states_in_episode = set()

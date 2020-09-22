@@ -11,6 +11,7 @@ import tf_util
 # from mpi4py import MPI
 from baselines import logger
 from console_util import fmt_row
+from graph_distance_logging import GraphDistanceLogger
 from mpi_util import RunningMeanStd
 from recorder import Recorder
 from utils import explained_variance
@@ -133,7 +134,8 @@ class PpoAgent(object):
                  use_neptune=False,
                  frame_stack=4,
                  env=None,
-                 log_heat_maps=True
+                 log_heat_maps=True,
+                 num_env=32,
                  ):
         self.lr = lr
         self.use_neptune = use_neptune
@@ -238,6 +240,7 @@ class PpoAgent(object):
         self.dones_count = 0
         self.frame_stack = frame_stack
         self.env = env
+        self.graph_distance = GraphDistanceLogger(self.env)
         self.single_slice_shape = ob_space.shape[-1] // frame_stack
         self.log_heat_maps = log_heat_maps
 
@@ -525,6 +528,13 @@ class PpoAgent(object):
         min_distance_to_goal_in_history = []
         for l in range(self.I.nlump):
             obs, prevrews, news, infos = self.env_get(l)
+            obs_len = obs.shape[-1] // self.frame_stack
+            obs_batch = obs[:, ..., -obs_len:]
+            from toy_mr import ToyMR
+            if isinstance(self.env, ToyMR):
+                for obs_batch_i in obs_batch:
+                    self.graph_distance.update_distances(self.env.obs2state(obs_batch_i))
+
             if news[0]:
                 self.dones_count += 1
             if self.log_heat_maps and self.dones_count % 20 == 0:
@@ -535,7 +545,11 @@ class PpoAgent(object):
                 obs_len = obs.shape[-1] // self.frame_stack
                 self.episode_observations.append(obs[0, 0, 0, -obs_len:])
 
-            for env_pos_in_lump, (info, done) in enumerate(zip(infos, news)):
+            for env_pos_in_lump, (ob, info, done) in enumerate(zip(obs, infos, news)):
+                if done:
+                    info.update(self.env.calculate_statistics(ob[0, 0, -obs_len:]))
+                    if isinstance(self.env, ToyMR):
+                        info.update(self.graph_distance.result())
                 if 'episode' in info:
                     # Information like rooms visited is added to info on end of episode.
                     epinfos.append(info['episode'])

@@ -62,7 +62,8 @@ def train(*, num_env, hps, num_timesteps, use_neptune=False):
         use_neptune=use_neptune,
         frame_stack=hps.pop('frame_stack'),
         vf_coef=hps.pop('vf_coeff'),
-        log_heat_maps=False
+        log_heat_maps=False,
+        num_env=num_env,
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):
