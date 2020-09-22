@@ -14,6 +14,7 @@ from console_util import fmt_row
 from graph_distance_logging import GraphDistanceLogger
 from mpi_util import RunningMeanStd
 from recorder import Recorder
+from toy_mr import ToyMR
 from utils import explained_variance
 
 NO_STATES = ['NO_STATES']
@@ -240,7 +241,8 @@ class PpoAgent(object):
         self.dones_count = 0
         self.frame_stack = frame_stack
         self.env = env
-        self.graph_distance = GraphDistanceLogger(self.env)
+        if isinstance(self.env, ToyMR):
+            self.graph_distance = GraphDistanceLogger(self.env)
         self.single_slice_shape = ob_space.shape[-1] // frame_stack
         self.log_heat_maps = log_heat_maps
 
