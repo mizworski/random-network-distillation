@@ -38,6 +38,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', 'hard', '21_09_20', 'eagle', 'final'],
+    tags=[globals()['script'][:-3], 'rnd', 'hard', '23_09_20', 'eagle', 'final'],
     with_neptune=True
 )
