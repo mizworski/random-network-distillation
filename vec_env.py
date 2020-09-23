@@ -268,7 +268,7 @@ class SubprocVecEnv(VecEnv):
 
     def reset_history(self):
         for remote in self.remotes:
-            remote.send(('reset_history', 0))
+            remote.send(('reset_history', None))
         self.waiting = True
 
     def step_wait(self):

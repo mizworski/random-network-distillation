@@ -25,7 +25,7 @@ class GraphDistanceLogger:
         self._max_distance_from_start = 0
 
     def update_distances(self, state):
-        self._min_distance_to_goal = min(self._min_distance_to_goal, self._distance_to_goal[state])
+        self._min_distance_to_goal = min(self._min_distance_to_goal, self._distance_to_goal.get(state, float('inf')))
         self._max_distance_from_start = max(self._max_distance_from_start, self._distance_from_start[state])
 
     def result(self):

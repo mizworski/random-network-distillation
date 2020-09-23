@@ -415,7 +415,7 @@ class ToyMR(gym.Env):
         # self.graph_distance = GraphDistanceLogger(self)
 
     @staticmethod
-    def obs2state(observation, copy=True):
+    def obs2state(observation, copy=False):
         if copy:
             observation = deepcopy(observation)
         return HashableNdarray(observation)
@@ -770,6 +770,13 @@ class ToyMR(gym.Env):
             "solved": self.room == self.goal_room,
             "room_first_visit": self.room_first_visit
         }
+
+        self._visited_states_in_episode.add(self.obs2state(obs))
+        self._visited_states_in_history.add(self.obs2state(obs))
+        info.update({
+            'visited_states_in_episode': len(self._visited_states_in_episode),
+            'visited_states_in_history': len(self._visited_states_in_history),
+        })
         return obs, reward, done, info
 
     def calculate_statistics(self, obs):
@@ -799,13 +806,6 @@ class ToyMR(gym.Env):
         if hasattr(self, 'graph_distance'):
             info.update(self.graph_distance.result())
 
-        self._visited_states_in_episode.add(self.obs2state(obs))
-        self._visited_states_in_history.add(self.obs2state(obs))
-
-        info.update({
-            'visited_states_in_episode': len(self._visited_states_in_episode),
-            'visited_states_in_history': len(self._visited_states_in_history),
-        })
         return info
 
     def reset_history(self):

@@ -256,6 +256,7 @@ class PpoAgent(object):
     def collect_random_statistics(self, num_timesteps):
         # Initializes observation normalization with data from random agent.
         all_ob = []
+        # print(type(self.I.venvs[0]))
         for lump in range(self.I.nlump):
             all_ob.append(self.I.venvs[lump].reset())
         for step in range(num_timesteps):
@@ -269,6 +270,7 @@ class PpoAgent(object):
                     self.stochpol.ob_rms.update(ob_[:, :, :, -self.single_slice_shape:])
                     all_ob.clear()
 
+    def reset_history(self):
         for lump in range(self.I.nlump):
             self.I.venvs[lump].reset_history()
 
@@ -494,6 +496,7 @@ class PpoAgent(object):
         """
         if self.I.step_count == 0:  # On the zeroth step with a new venv, we need to call reset on the environment
             ob = self.I.venvs[l].reset()
+            self.I.venvs[l].reset_history()
             out = self.I.env_results[l] = (ob, None, np.ones(self.I.lump_stride, bool), {})
         else:
             if self.I.env_results[l] is None:
@@ -548,10 +551,9 @@ class PpoAgent(object):
                 self.episode_observations.append(obs[0, 0, 0, -obs_len:])
 
             for env_pos_in_lump, (ob, info, done) in enumerate(zip(obs, infos, news)):
-                if done:
+                if done and isinstance(self.env, ToyMR):
                     info.update(self.env.calculate_statistics(ob[..., -obs_len:]))
-                    if isinstance(self.env, ToyMR):
-                        info.update(self.graph_distance.result())
+                    info.update(self.graph_distance.result())
                 if 'episode' in info:
                     # Information like rooms visited is added to info on end of episode.
                     epinfos.append(info['episode'])

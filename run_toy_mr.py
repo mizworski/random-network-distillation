@@ -70,6 +70,8 @@ def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
         agent.collect_random_statistics(num_timesteps=128 * 50)
     assert len(hps) == 0, "Unused hyperparameters: %s" % list(hps.keys())
 
+    agent.reset_history()
+
     counter = 0
     while True:
         info = agent.step()
