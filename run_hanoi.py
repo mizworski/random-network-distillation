@@ -126,7 +126,7 @@ def main():
 
     args.add('n_disks', parameters["n_disks"])
     args.add('seed', 0)
-    args.add('max_episode_steps', 600)
+    args.add('max_episode_steps', 1000)
 
     args.add('num_timesteps', int(1e12))
     args.add('num_env', 32)

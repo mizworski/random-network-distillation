@@ -6,18 +6,19 @@ import pickle
 
 import tf_util
 from baselines import logger
-from cmd_util import make_toy_mr_env
+from cmd_util import make_toy_mr_env, make_hanoi_env, make_bit_flipper_env
 from policies.cnn_policy_param_matched import ToyMRCnnPolicy
 from ppo_agent import PpoAgent
 from toy_mr import ToyMR
+from utils import set_global_seeds
 from vec_env import VecFrameStack
 
 
-def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
+def train(*, num_env, hps, num_timesteps, use_neptune=False):
     venv = VecFrameStack(
-        make_toy_mr_env(map_file, num_env, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
-                        start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
-                        max_episode_steps=hps.pop('max_episode_steps')),
+        make_bit_flipper_env(num_env, n_bits=hps.pop('n_bits'), wrapper_kwargs=dict(),
+                             start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
+                             max_episode_steps=hps.pop('max_episode_steps')),
         hps['frame_stack'])
     venv.score_multiple = 1
     venv.record_obs = False
@@ -60,16 +61,14 @@ def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
         ext_coeff=hps.pop('ext_coeff'),
         use_neptune=use_neptune,
         frame_stack=hps.pop('frame_stack'),
-        env=ToyMR(map_file),
         vf_coef=hps.pop('vf_coeff'),
+        log_heat_maps=False,
         num_env=num_env,
     )
     agent.start_interaction([venv])
     if hps.pop('update_ob_stats_from_random_agent'):
         agent.collect_random_statistics(num_timesteps=128 * 50)
     assert len(hps) == 0, "Unused hyperparameters: %s" % list(hps.keys())
-
-    agent.reset_history()
 
     counter = 0
     while True:
@@ -102,9 +101,6 @@ def main():
         '--debug', action='store_true',
         default=False
     )
-    parser.add_argument(
-        '--map_file', type=str, default=None,
-    )
     cmd_args, unknown = parser.parse_known_args()
     debug = cmd_args.debug
     spec_path = cmd_args.config[0]
@@ -128,10 +124,9 @@ def main():
 
     args = MockArgs()
 
-    args.add('map_file', parameters["map_file"])  # 'chain_env' 'toy_mr'
-    args.add('env_size', parameters["env_size"])
+    args.add('n_bits', parameters["n_bits"])
     args.add('seed', 0)
-    args.add('max_episode_steps', 600)
+    args.add('max_episode_steps', 100)
 
     args.add('num_timesteps', int(1e12))
     args.add('num_env', 32)
@@ -180,7 +175,7 @@ def main():
         predictor_hid_size=parameters['predictor_hid_size'],
         lr=parameters['lr'],
         max_grad_norm=0.0,
-        env_size=args.env_size,
+        n_bits=args.n_bits,
         use_news=args.use_news,
         gamma=args.gamma,
         gamma_ext=args.gamma_ext,
@@ -198,7 +193,7 @@ def main():
     )
 
     tf_util.make_session(make_default=True)
-    train(map_file=args.map_file, num_env=args.num_env,
+    train(num_env=args.num_env,
           num_timesteps=args.num_timesteps, hps=hps, use_neptune=(not debug))
 
 

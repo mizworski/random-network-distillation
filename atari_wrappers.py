@@ -261,7 +261,7 @@ def make_atari(env_id, max_episode_steps=4500):
     return env
 
 
-def make_toy_mr(map_file, env_size=None, max_episode_steps=300):
+def make_toy_mr(map_file, env_size=None, max_episode_steps=600):
     from toy_mr import ToyMR
     from gym import wrappers
     from chain_env import ChainEnvironment

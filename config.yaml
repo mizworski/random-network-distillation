@@ -75,7 +75,7 @@ contexts:
      nodes: 1
      slurm_url: plgmizworski@eagle.man.poznan.pl
      storage_dir: /tmp/lustre/plgmizworski
-     singularity_container: -B -H $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/toymr-22.sif
+     singularity_container: -H $PWD:/homeplaceholder -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/toymr-22.sif
 
    eagle-rnd:
      account: plgplanningrl2
@@ -89,7 +89,7 @@ contexts:
      nodes: 1
      slurm_url: plgmizworski@eagle.man.poznan.pl
      storage_dir: /tmp/lustre/plgmizworski
-     singularity_container: -B -H $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/kc-rnd.sif
+     singularity_container: -H $PWD:/homeplaceholder -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/kc-rnd.sif
 
    pro-rnd:
      account: plgplanningrl2
@@ -104,7 +104,7 @@ contexts:
      cpu: 24
      mem: 96G
      slurm_url: plgmizworski@pro.cyfronet.pl
-     storage_dir: /net/people/plgmizworski/experiments/
+     storage_dir: /net/archive/groups/plggluna/plgmizworski/rnd/
      singularity_container: -B $TMPDIR:/tmp /net/people/plgmizworski/singularity/kc-rnd.sif
 
    fast:
@@ -119,4 +119,4 @@ contexts:
      nodes: 1
      slurm_url: plgmizworski@eagle.man.poznan.pl
      storage_dir: /tmp/lustre/plgmizworski
-     singularity_container: -B -H $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/kc-rnd.sif
+     singularity_container: -H $PWD:/homeplaceholder -B $TMPDIR:/tmp /home/plgrid/plgmizworski/singularity/kc-rnd.sif
