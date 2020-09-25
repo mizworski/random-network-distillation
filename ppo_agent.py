@@ -135,7 +135,7 @@ class PpoAgent(object):
                  use_neptune=False,
                  frame_stack=4,
                  env=None,
-                 log_heat_maps=True,
+                 log_heat_maps=False,
                  num_env=32,
                  ):
         self.lr = lr

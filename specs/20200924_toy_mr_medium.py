@@ -1,7 +1,7 @@
 from mrunner.helpers.specification_helper import create_experiments_helper
 
 experiments_list = create_experiments_helper(
-    experiment_name='rnd_toymr_easy',
+    experiment_name='rnd_toymr_medium',
     base_config={
         "env_id": "toy_mr",
         "env_size": None,
@@ -23,12 +23,12 @@ experiments_list = create_experiments_helper(
     },
     params_grid={
         'map_file': [
-            'full_mr_map_easy.txt',
+            'full_mr_map_medium.txt',
         ],
-        "lr": [1e-4, 5e-5, 1e-5],
+        "lr": [1e-4, 5e-5],
         'rep_size': [64],
 
-        "int_coeff": [0, 1],
+        "int_coeff": [0, 1, 10, 100],
 
         'nepochs': [16],
         'idx': [0, 1, 2],
@@ -42,6 +42,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', 'easy', '23_09_20', 'eagle', 'final'],
+    tags=[globals()['script'][:-3], 'rnd', 'medium', '23_09_20', 'eagle', 'final'],
     with_neptune=True
 )

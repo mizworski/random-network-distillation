@@ -17,7 +17,7 @@ def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
     venv = VecFrameStack(
         make_toy_mr_env(map_file, num_env, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
                         start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
-                        max_episode_steps=hps.pop('max_episode_steps')),
+                        max_episode_steps=hps.pop('max_episode_steps'), trap_reward=hps.pop('trap_reward')),
         hps['frame_stack'])
     venv.score_multiple = 1
     venv.record_obs = False
@@ -81,7 +81,8 @@ def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
         if agent.I.stats['tcount'] > num_timesteps:
             break
 
-    agent.stop_interaction()
+    return
+    # agent.stop_interaction()
 
 
 def add_env_params(parser):
@@ -130,10 +131,11 @@ def main():
 
     args.add('map_file', parameters["map_file"])  # 'chain_env' 'toy_mr'
     args.add('env_size', parameters["env_size"])
+    args.add('trap_reward', parameters["trap_reward"])
     args.add('seed', 0)
     args.add('max_episode_steps', 600)
 
-    args.add('num_timesteps', int(1e12))
+    args.add('num_timesteps', int(3e7))
     args.add('num_env', 32)
     args.add('use_news', 0)
     args.add('gamma', parameters['gamma'])
@@ -195,6 +197,7 @@ def main():
         ext_coeff=args.ext_coeff,
         dynamics_bonus=args.dynamics_bonus,
         vf_coeff=args.vf_coeff,
+        trap_reward=args.trap_reward,
     )
 
     tf_util.make_session(make_default=True)

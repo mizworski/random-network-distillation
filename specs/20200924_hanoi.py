@@ -1,10 +1,8 @@
 from mrunner.helpers.specification_helper import create_experiments_helper
 
 experiments_list = create_experiments_helper(
-    experiment_name='rnd_toymr_easy',
+    experiment_name='rnd_hanoi',
     base_config={
-        "env_id": "toy_mr",
-        "env_size": None,
         "lr": 1e-4,
         "hidsize": 64,
         "predictor_hid_size": 512,
@@ -18,30 +16,23 @@ experiments_list = create_experiments_helper(
         'gamma': 0.99,
         'gamma_ext': 0.999,
         'proportion_of_exp': 1.,
-        'trap_reward': 0.,
 
     },
     params_grid={
-        'map_file': [
-            'full_mr_map_easy.txt',
-        ],
-        "lr": [1e-4, 5e-5, 1e-5],
+        "n_disks": [7],
+        "lr": [1e-2, 5e-3, 1e-3],
         'rep_size': [64],
 
-        "int_coeff": [0, 1],
+        "int_coeff": [1, 3, 10, 30],
 
-        'nepochs': [16],
+        'nepochs': [4],
         'idx': [0, 1, 2],
-
-        # 'lam': [0.95, 0.99],
-        # 'gamma': [0.99, 0.999],
-        # 'gamma_ext': [0.999, 0.9999],
     },
-    script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',
+    script='python3 -m run_hanoi --mrunner --output_dir=./out --config_file=configs/empty.gin',
     exclude=['.pytest_cache', '.vagrant', '__pycache__',
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', 'easy', '23_09_20', 'eagle', 'final'],
+    tags=[globals()['script'][:-3], 'rnd', 'hanoi', '25_09_20', 'eagle', 'grid'],
     with_neptune=True
 )

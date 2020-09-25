@@ -18,6 +18,7 @@ experiments_list = create_experiments_helper(
         'gamma': 0.99,
         'gamma_ext': 0.999,
         'proportion_of_exp': 1.,
+        'trap_reward': 0.,
 
     },
     params_grid={

@@ -128,7 +128,7 @@ def main():
     args.add('seed', 0)
     args.add('max_episode_steps', 100)
 
-    args.add('num_timesteps', int(1e12))
+    args.add('num_timesteps', int(3e7))
     args.add('num_env', 32)
     args.add('use_news', 0)
     args.add('gamma', parameters['gamma'])
