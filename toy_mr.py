@@ -412,6 +412,7 @@ class ToyMR(gym.Env):
 
         self._visited_states_in_episode = set()
         self._visited_states_in_history = set()
+        self._obs_labels = None
         # self.graph_distance = GraphDistanceLogger(self)
 
     @staticmethod
@@ -773,13 +774,7 @@ class ToyMR(gym.Env):
 
         self._visited_states_in_episode.add(self.obs2state(obs))
         self._visited_states_in_history.add(self.obs2state(obs))
-        info.update({
-            'visited_states_in_episode': len(self._visited_states_in_episode),
-            'visited_states_in_history': len(self._visited_states_in_history),
-        })
-        return obs, reward, done, info
 
-    def calculate_statistics(self, obs):
         observation_labels = self._get_dense_obs_labels()
         keys_taken_mask = [
             1 - obs[0, 0, idx]
@@ -794,19 +789,17 @@ class ToyMR(gym.Env):
             if 'door_' in label
         ]
         nb_doors_opened_e = sum(doors_opened_mask)
-        info = {
-            "solved": self.room == self.goal_room,
-            "room_first_visit": self.room_first_visit,
+        info.update({
+            'visited_states_in_episode': len(self._visited_states_in_episode),
+            'visited_states_in_history': len(self._visited_states_in_history),
             "nb_keys_taken": nb_keys_taken_e,
             "nb_doors_opened": nb_doors_opened_e,
-        }
-        if hasattr(self, 'graph_distance'):
-            self.graph_distance.update_distances(self.obs2state(obs))
+        })
 
-        if hasattr(self, 'graph_distance'):
-            info.update(self.graph_distance.result())
+        return obs, reward, done, info
 
-        return info
+    def calculate_statistics(self, obs):
+        return {}
 
     def reset_history(self):
         self._visited_states_in_episode = set()
@@ -1278,16 +1271,18 @@ class ToyMR(gym.Env):
         pygame.image.save(map_, file_name + '.png')
 
     def _get_dense_obs_labels(self):
-        sample_observation = self.get_state_named_tuple()
-        observation_labels = []
-        for attr_name, attr_val in sample_observation:
-            if len(attr_val) == 1:
-                observation_labels.append(attr_name)
-            else:
-                observation_labels.append(f'{attr_name}_y')
-                observation_labels.append(f'{attr_name}_x')
+        if self._obs_labels is None:
+            sample_observation = self.get_state_named_tuple()
+            observation_labels = []
+            for attr_name, attr_val in sample_observation:
+                if len(attr_val) == 1:
+                    observation_labels.append(attr_name)
+                else:
+                    observation_labels.append(f'{attr_name}_y')
+                    observation_labels.append(f'{attr_name}_x')
+            self._obs_labels = observation_labels
 
-        return observation_labels
+        return self._obs_labels
 
 
 def draw_circle(screen, coord, color, scale=1., pos_inside_tile=None, border=0):

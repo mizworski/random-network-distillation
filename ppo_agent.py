@@ -552,7 +552,7 @@ class PpoAgent(object):
 
             for env_pos_in_lump, (ob, info, done) in enumerate(zip(obs, infos, news)):
                 if done and isinstance(self.env, ToyMR):
-                    info.update(self.env.calculate_statistics(ob[..., -obs_len:]))
+                    # info.update(self.env.calculate_statistics(ob[..., -obs_len:]))
                     info.update(self.graph_distance.result())
                 if 'episode' in info:
                     # Information like rooms visited is added to info on end of episode.
@@ -571,9 +571,6 @@ class PpoAgent(object):
                         room_loc for room_loc, first_visit in info['room_first_visit'].items()
                         if first_visit is not None
                     ]
-                    # self.I.buf_epinfos[env_pos_in_lump+l*self.I.lump_stride][t] = {
-                    #     'visited_rooms': visited_rooms
-                    # }
                     episodes_visited_rooms.append(visited_rooms)
                     episodes_keys_taken.append(info['nb_keys_taken'])
                     episodes_doors_opened.append(info['nb_doors_opened'])

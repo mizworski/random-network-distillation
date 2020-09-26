@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import atexit
 import argparse
 import functools
 import os
@@ -162,7 +163,10 @@ def main():
                                   upload_stdout=False,
                                   upload_stderr=False,
                                   )
+
+        atexit.register(neptune.stop)
         baselines_format_strs = ['log', 'csv']
+
     else:
         print("running without neptune")
         baselines_format_strs = ['stdout', 'log', 'csv']
