@@ -64,7 +64,7 @@ def make_atari_env(env_id, num_env, seed, wrapper_kwargs=None, start_index=0, ma
 
 
 def make_toy_mr_env(map_file, num_env, env_size=None, wrapper_kwargs=None, start_index=0, max_episode_steps=600,
-                    trap_reward=0.):
+                    trap_reward=0., key_door_reward=0.):
     """
     Create a wrapped, monitored SubprocVecEnv for Atari.
     """
@@ -72,7 +72,8 @@ def make_toy_mr_env(map_file, num_env, env_size=None, wrapper_kwargs=None, start
 
     def make_env(rank):  # pylint: disable=C0111
         def _thunk():
-            env = make_toy_mr(map_file, env_size=env_size, max_episode_steps=max_episode_steps, trap_reward=trap_reward)
+            env = make_toy_mr(map_file, env_size=env_size, max_episode_steps=max_episode_steps, trap_reward=trap_reward,
+                              key_door_reward=key_door_reward)
             env = Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)), allow_early_resets=True)
             # return wrap_deepmind(env, **wrapper_kwargs)
             return env

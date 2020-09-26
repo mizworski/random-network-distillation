@@ -18,7 +18,8 @@ def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
     venv = VecFrameStack(
         make_toy_mr_env(map_file, num_env, env_size=hps.pop('env_size'), wrapper_kwargs=dict(),
                         start_index=num_env,  # * MPI.COMM_WORLD.Get_rank(),
-                        max_episode_steps=hps.pop('max_episode_steps'), trap_reward=hps.pop('trap_reward')),
+                        max_episode_steps=hps.pop('max_episode_steps'), trap_reward=hps.pop('trap_reward'),
+                        key_door_reward=hps.pop('key_door_reward')),
         hps['frame_stack'])
     venv.score_multiple = 1
     venv.record_obs = False
@@ -133,6 +134,7 @@ def main():
     args.add('map_file', parameters["map_file"])  # 'chain_env' 'toy_mr'
     args.add('env_size', parameters["env_size"])
     args.add('trap_reward', parameters["trap_reward"])
+    args.add('key_door_reward', parameters["key_door_reward"])
     args.add('seed', 0)
     args.add('max_episode_steps', 600)
 
@@ -202,6 +204,7 @@ def main():
         dynamics_bonus=args.dynamics_bonus,
         vf_coeff=args.vf_coeff,
         trap_reward=args.trap_reward,
+        key_door_reward=args.key_door_reward,
     )
 
     tf_util.make_session(make_default=True)

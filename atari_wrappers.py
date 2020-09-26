@@ -261,14 +261,14 @@ def make_atari(env_id, max_episode_steps=4500):
     return env
 
 
-def make_toy_mr(map_file, env_size=None, max_episode_steps=600, trap_reward=0.):
+def make_toy_mr(map_file, env_size=None, max_episode_steps=600, trap_reward=0., key_door_reward=0.):
     from toy_mr import ToyMR
     from gym import wrappers
     from chain_env import ChainEnvironment
     if map_file:
-        env = ToyMR(map_file=map_file, trap_reward=trap_reward)
+        env = ToyMR(map_file=map_file, trap_reward=trap_reward, key_door_reward=key_door_reward)
     else:
-        env = ToyMR(trap_reward=trap_reward)
+        env = ToyMR(trap_reward=trap_reward, key_door_reward=key_door_reward)
     env = TimeLimit(env, max_episode_steps=max_episode_steps)
     return env
 

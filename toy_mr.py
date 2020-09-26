@@ -350,7 +350,7 @@ class ToyMR(gym.Env):
     MAP_DIR = 'mr_maps/'
 
     def __init__(self, map_file='full_mr_map.txt', max_lives=1, absolute_coordinates=False,
-                 doors_keys_scale=1, save_enter_cell=True, trap_reward=0.):
+                 doors_keys_scale=1, save_enter_cell=True, trap_reward=0., key_door_reward=0.):
         """
         Based on implementation provided here
         https://github.com/chrisgrimm/deep_abstract_q_network/blob/master/toy_mr.py
@@ -404,6 +404,7 @@ class ToyMR(gym.Env):
         self.doors_keys_scale = doors_keys_scale
         self.save_enter_cell = save_enter_cell
         self.trap_reward = trap_reward
+        self.key_door_reward = key_door_reward
         np_state = self.get_np_state()
         self.observation_space = Box(low=0, high=255, shape=np_state.shape,
                                      dtype=np.uint8)
@@ -709,6 +710,7 @@ class ToyMR(gym.Env):
                 if self.num_keys > 0:
                     # new_room.doors.remove(new_agent)
                     self.num_keys -= 1
+                    reward = self.key_door_reward
                     self.doors[(new_room.loc, new_agent)] = False
 
                     self.room = new_room
@@ -742,6 +744,7 @@ class ToyMR(gym.Env):
                 # assert new_agent in self.room.keys
                 # self.room.keys.remove(new_agent)
                 self.num_keys += 1
+                reward = self.key_door_reward
                 assert (self.room.loc, new_agent) in self.keys
                 self.keys[(self.room.loc, new_agent)] = False
                 self.agent = new_agent
@@ -749,6 +752,7 @@ class ToyMR(gym.Env):
                 if self.num_keys > 0:
                     # assert new_agent in self.room.doors
                     # self.room.doors.remove(new_agent)
+                    reward = self.key_door_reward
                     self.num_keys -= 1
                     self.agent = new_agent
                     assert (self.room.loc, new_agent) in self.doors
