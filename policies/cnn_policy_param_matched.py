@@ -36,7 +36,7 @@ class CnnPolicy(StochasticPolicy):
                  single_slice_shape=1,
                  rep_size=256,
                  predictor_hid_size=512,
-                 # random_hid_size=512,
+                 nb_layers_vf=2,
                  ):
         StochasticPolicy.__init__(self, scope, ob_space, ac_space)
         self.proportion_of_exp_used_for_predictor_update = proportion_of_exp_used_for_predictor_update
@@ -67,7 +67,8 @@ class CnnPolicy(StochasticPolicy):
                               extrahid=extrahid,
                               sy_nenvs=self.sy_nenvs,
                               sy_nsteps=self.sy_nsteps - 1,
-                              pdparamsize=pdparamsize
+                              pdparamsize=pdparamsize,
+                              nb_layers_vf=nb_layers_vf,
                               )
         self.pdparam_rollout, self.vpred_int_rollout, self.vpred_ext_rollout, self.snext_rollout = \
             self.apply_policy(self.ph_ob[None],
@@ -78,7 +79,8 @@ class CnnPolicy(StochasticPolicy):
                               extrahid=extrahid,
                               sy_nenvs=self.sy_nenvs,
                               sy_nsteps=self.sy_nsteps,
-                              pdparamsize=pdparamsize
+                              pdparamsize=pdparamsize,
+                              nb_layers_vf=nb_layers_vf,
                               )
         random_hid_size = predictor_hid_size
         if dynamics_bonus:
@@ -99,7 +101,7 @@ class CnnPolicy(StochasticPolicy):
         self.ph_istate = ph_istate
 
     @staticmethod
-    def apply_policy(ph_ob, reuse, scope, hidsize, memsize, extrahid, sy_nenvs, sy_nsteps, pdparamsize):
+    def apply_policy(ph_ob, reuse, scope, hidsize, memsize, extrahid, sy_nenvs, sy_nsteps, pdparamsize, nb_layers_vf=2):
         data_format = 'NHWC'
         ph = ph_ob
         assert len(ph.shape.as_list()) == 5  # B,T,H,W,C
@@ -271,7 +273,7 @@ class CnnPolicy(StochasticPolicy):
 class ToyMRCnnPolicy(CnnPolicy):
     @staticmethod
     def apply_policy(ph_ob, reuse, scope, hidsize, memsize, extrahid, sy_nenvs,
-                     sy_nsteps, pdparamsize):
+                     sy_nsteps, pdparamsize, nb_layers_vf=2):
         data_format = 'NHWC'
         ph = ph_ob
         assert len(ph.shape.as_list()) == 5  # B,T,H,W,C
@@ -286,8 +288,8 @@ class ToyMRCnnPolicy(CnnPolicy):
             X = to2d(X)
             mix_other_observations = [X]
             X = tf.concat(mix_other_observations, axis=1)
-            X = activ(fc(X, 'fc1', nh=hidsize, init_scale=np.sqrt(2)))
-            X = activ(fc(X, 'fc2', nh=hidsize, init_scale=np.sqrt(2)))
+            for layer in range(nb_layers_vf):
+                X = activ(fc(X, f'fc{layer}', nh=hidsize, init_scale=np.sqrt(2)))
 
             snext = tf.zeros((sy_nenvs, memsize))
             mix_timeout = [X]

@@ -43,6 +43,7 @@ def train(*, map_file, num_env, hps, num_timesteps, use_neptune=False):
             single_slice_shape=(ob_space.shape[-1] // hps['frame_stack']),
             rep_size=hps.pop('rep_size'),
             predictor_hid_size=hps.pop('predictor_hid_size'),
+            nb_layers_vf=hps.pop('nb_layers_vf'),
         ),
         gamma=gamma,
         gamma_ext=hps.pop('gamma_ext'),
@@ -152,6 +153,7 @@ def main():
     args.add('ext_coeff', parameters['ext_coeff'])
     args.add('dynamics_bonus', 0)
     args.add('vf_coeff', parameters['vf_coeff'])
+    args.add('nb_layers_vf', parameters['nb_layers_vf'])
 
     if not debug:
         # TODO read more from specification
@@ -202,6 +204,7 @@ def main():
         dynamics_bonus=args.dynamics_bonus,
         vf_coeff=args.vf_coeff,
         trap_reward=args.trap_reward,
+        nb_layers_vf=args.nb_layers_vf,
     )
 
     tf_util.make_session(make_default=True)
