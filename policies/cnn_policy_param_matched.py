@@ -288,8 +288,10 @@ class ToyMRCnnPolicy(CnnPolicy):
             X = to2d(X)
             mix_other_observations = [X]
             X = tf.concat(mix_other_observations, axis=1)
-            for layer in range(nb_layers_vf):
-                X = activ(fc(X, f'fc{layer}', nh=hidsize, init_scale=np.sqrt(2)))
+            X = activ(fc(X, 'fc0', nh=hidsize, init_scale=np.sqrt(2)))
+            X = activ(fc(X, 'fc1', nh=hidsize, init_scale=np.sqrt(2)))
+            X = activ(fc(X, 'fc2', nh=hidsize, init_scale=np.sqrt(2)))
+            X = activ(fc(X, 'fc3', nh=hidsize, init_scale=np.sqrt(2)))
 
             snext = tf.zeros((sy_nenvs, memsize))
             mix_timeout = [X]
