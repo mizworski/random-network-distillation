@@ -28,7 +28,7 @@ experiments_list = create_experiments_helper(
         ],
         "lr": [1e-3],
         'rep_size': [64],
-        "int_coeff": [100],
+        "int_coeff": [0],
         'nepochs': [16],
     },
     script='python3 -m run_toy_mr --mrunner --output_dir=./out --config_file=configs/empty.gin',
@@ -36,6 +36,6 @@ experiments_list = create_experiments_helper(
              'checkpoints', 'out', 'Vagrantfile', 'singularity.def',
              'rnd_toyMR_20200417.simg'],
     python_path='',
-    tags=[globals()['script'][:-3], 'rnd', 'ppo', 'easy', '29_09_20', 'eagle', 'tmr_easy_final', 'ppo_final'],
+    tags=[globals()['script'][:-3], 'rnd', 'ppo', 'easy', '30_09_20', 'eagle', 'tmr_easy_final', 'ppo_final'],
     with_neptune=True
 )
